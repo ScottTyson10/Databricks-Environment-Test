@@ -16,7 +16,7 @@ Feature: Databricks Clustering Compliance
     When I check clusterByAuto flag configuration
     Then tables with clusterByAuto=true should be considered properly clustered
 
-  @clustering  @auto_clustering
+  @clustering  @delta_auto_optimization
   Scenario: Tables can use delta auto-optimization for clustering
     Given I discover all accessible tables with clustering filters
     When I check delta auto-optimization settings

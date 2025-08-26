@@ -288,6 +288,124 @@ def verify_cluster_by_auto_tables_properly_clustered(clustering_context: Cluster
     logger.info(f"Business insight: {auto_clustering_percentage:.1f}% of tables use automatic clustering")
     logger.info(f"Business insight: {any_clustering_percentage:.1f}% of tables use any form of clustering")
 
+
+@when("I check delta auto-optimization settings")
+def check_delta_auto_optimization_settings(clustering_context: ClusteringContext):
+    """Check delta auto-optimization settings for all discovered tables.
+    
+    For each table, we check:
+    - optimizeWrite flag status
+    - autoCompact flag status
+    - Combined delta auto-optimization status
+    """
+    assert clustering_context.discovered_tables, "No tables discovered to analyze"
+    assert clustering_context.clustering_validator, "Clustering validator not initialized"
+    
+    for table in clustering_context.discovered_tables:
+        # Check individual flags and combined status
+        has_optimize_write = clustering_context.clustering_validator.has_optimize_write(table)
+        has_auto_compact = clustering_context.clustering_validator.has_auto_compact(table)
+        has_delta_optimization = clustering_context.clustering_validator.has_delta_auto_optimization(table)
+        
+        # Get detailed status
+        optimization_status = clustering_context.clustering_validator.get_delta_auto_optimization_status(table)
+        
+        # Store validation results
+        clustering_context.validation_results[table.full_name] = {
+            "table_info": table,
+            "has_optimize_write": has_optimize_write,
+            "has_auto_compact": has_auto_compact,
+            "has_delta_auto_optimization": has_delta_optimization,
+            "delta_optimization_status": optimization_status,
+            "has_any_clustering_approach": clustering_context.clustering_validator.has_any_clustering_approach(table),
+        }
+        
+        # Track violations if table doesn't have both flags enabled
+        if not has_delta_optimization:
+            clustering_context.violations.append(
+                {
+                    "table": table.full_name,
+                    "reason": f"Missing delta auto-optimization: {optimization_status}",
+                    "has_optimize_write": has_optimize_write,
+                    "has_auto_compact": has_auto_compact,
+                }
+            )
+    
+    logger.info(f"Analyzed delta auto-optimization settings for {len(clustering_context.discovered_tables)} tables")
+
+
+@then("tables with both optimizeWrite=true and autoCompact=true should be considered clustered")
+def verify_delta_auto_optimization_clustering(clustering_context: ClusteringContext):
+    """Verify that tables with both delta auto-optimization flags are considered clustered.
+    
+    This validates:
+    - Tables with both optimizeWrite=true AND autoCompact=true are detected
+    - These tables are considered as having a clustering approach
+    - Business insights about delta auto-optimization adoption are available
+    """
+    total_tables = len(clustering_context.discovered_tables)
+    
+    # Count tables by delta optimization status
+    both_flags_enabled = 0
+    optimize_write_only = 0
+    auto_compact_only = 0
+    neither_flag = 0
+    
+    for result in clustering_context.validation_results.values():
+        if result["has_delta_auto_optimization"]:
+            both_flags_enabled += 1
+        elif result["has_optimize_write"]:
+            optimize_write_only += 1
+        elif result["has_auto_compact"]:
+            auto_compact_only += 1
+        else:
+            neither_flag += 1
+    
+    # Calculate percentages
+    both_flags_percentage = (both_flags_enabled / total_tables * 100) if total_tables > 0 else 0
+    partial_optimization_count = optimize_write_only + auto_compact_only
+    partial_percentage = (partial_optimization_count / total_tables * 100) if total_tables > 0 else 0
+    
+    # Log delta auto-optimization compliance summary
+    logger.info("Delta auto-optimization compliance summary:")
+    logger.info(f"  Total tables analyzed: {total_tables}")
+    logger.info(f"  Tables with both optimization flags: {both_flags_enabled} ({both_flags_percentage:.1f}%)")
+    logger.info(f"  Tables with partial optimization: {partial_optimization_count} ({partial_percentage:.1f}%)")
+    logger.info(f"    - optimizeWrite only: {optimize_write_only}")
+    logger.info(f"    - autoCompact only: {auto_compact_only}")
+    logger.info(f"  Tables with no optimization: {neither_flag}")
+    
+    # Report on fully optimized tables
+    fully_optimized_tables = [
+        result for result in clustering_context.validation_results.values()
+        if result["has_delta_auto_optimization"]
+    ]
+    
+    if fully_optimized_tables:
+        logger.info("Tables with full delta auto-optimization:")
+        for result in fully_optimized_tables[:5]:  # Show first 5 as examples
+            table_info = result["table_info"]
+            logger.info(f"  - {table_info.full_name}: Both flags enabled")
+        if len(fully_optimized_tables) > 5:
+            logger.info(f"  ... and {len(fully_optimized_tables) - 5} more")
+    
+    # Report on partially optimized tables (potential improvement opportunities)
+    if clustering_context.violations:
+        logger.info(f"Tables with partial or missing optimization ({len(clustering_context.violations)} total):")
+        for violation in clustering_context.violations[:5]:  # Show first 5 as examples
+            logger.info(f"  - {violation['table']}: {violation['reason']}")
+        if len(clustering_context.violations) > 5:
+            logger.info(f"  ... and {len(clustering_context.violations) - 5} more")
+    
+    # Verify detection works and we have meaningful data
+    assert total_tables > 0, f"Expected to discover tables for analysis, found {total_tables}"
+    
+    # Log success message
+    logger.info(
+        f"Successfully analyzed delta auto-optimization across {total_tables} tables. "
+        f"Detection capabilities verified."
+    )
+
     # Success criteria: Detection works and we have insights
     # This is a foundational scenario focused on capability validation
     assert clustering_context.clustering_validator is not None, "Auto clustering validation capability verified"

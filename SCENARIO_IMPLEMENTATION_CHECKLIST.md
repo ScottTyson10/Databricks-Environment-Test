@@ -3,14 +3,15 @@
 
 ## Instructions for Use
 
-1. **Copy this template** for each new scenario (e.g., `COMMENT_LENGTH_IMPLEMENTATION.md`)
+1. **Copy this template** for each new scenario (e.g., `CLUSTER_EXCLUSION_IMPLEMENTATION.md`)
 2. **Fill in scenario-specific details** in the "Scenario Information" section
-3. **Work through each checklist item** systematically
-4. **Check off items** as you complete them
-5. **Document findings and decisions** in the provided spaces
+3. **Start with Phase 0** - Create feature branch before any implementation work
+4. **Work through each phase systematically** - Don't skip phases or checklist items
+5. **Check off items** as you complete them and document findings in provided spaces
 6. **Use this as your single source of truth** during implementation
 7. **Update the checklist after each phase** using the "📊 Phase X Checklist Update" sections
 8. **Commit your progress** at the end of each phase to track implementation status
+9. **Complete with Phase 6** - Merge to main and clean up feature branch
 
 ---
 
@@ -30,11 +31,29 @@
 **Estimated Timeline**: [Research: X days, Implementation: Y days]
 
 **Current Status**: 
+- [ ] Phase 0: Git Workflow Setup - Not Started
 - [ ] Phase 1: Research - Not Started
 - [ ] Phase 2: Layer 1 (Unit Tests) - Not Started
 - [ ] Phase 3: Layer 2 (Integration Tests) - Not Started
 - [ ] Phase 4: Layer 3 (Production Tests) - Not Started
 - [ ] Phase 5: Documentation & Completion - Not Started
+- [ ] Phase 6: Git Integration & Cleanup - Not Started
+
+---
+
+## Phase 0: Git Workflow Setup
+
+### 🌿 Branch Management
+- [ ] **Current work committed**: Ensure main branch is clean or current work is committed
+- [ ] **Create feature branch**: `git checkout -b feature/[scenario-name]` (e.g., `feature/cluster-exclusion-flag`)
+- [ ] **Branch naming convention**: Use kebab-case matching the SCENARIO name from Makefile
+
+### 📊 Phase 0 Checklist Update  
+- [ ] **Update implementation checklist**: Mark Phase 0 complete
+- [ ] **Document branch name**: Record feature branch name in checklist
+- [ ] **Commit initial checklist**: `git add [checklist].md && git commit -m "Phase 0: Created feature branch for [scenario name]"`
+
+**Phase 0 Complete**: ✅ Ready for research / ❌ Need to address git setup
 
 ---
 
@@ -292,9 +311,32 @@
 - [ ] **Fill in Summary & Handoff section**: Complete all retrospective information
 - [ ] **Update status in checklist header**: Show scenario COMPLETE
 - [ ] **Final commit**: `git add [checklist].md && git commit -m "Phase 5: [Scenario name] implementation complete"`
-- [ ] **Archive checklist**: Move to `research/[scenario]/` folder for reference
 
-**Scenario Implementation Complete**: ✅ Ready for next scenario
+**Scenario Implementation Complete**: ✅ Ready for git merge
+
+---
+
+## Phase 6: Git Integration & Cleanup
+
+### 🌿 Git Merge Process
+- [ ] **Commit final changes**: Ensure all changes are committed on feature branch
+- [ ] **Switch to main**: `git checkout main`
+- [ ] **Pull latest main**: `git pull origin main` - Ensure main is up to date
+- [ ] **Merge feature branch**: `git merge feature/[scenario-name]` - Fast-forward merge
+- [ ] **Push to main**: `git push origin main`
+- [ ] **Delete feature branch**: `git branch -d feature/[scenario-name]` - Clean up local branch
+
+### 🧹 Cleanup & Documentation
+- [ ] **Archive implementation checklist**: Move checklist to `research/[scenario]/` folder  
+- [ ] **Update main documentation**: Add scenario to README if needed
+- [ ] **Verify clean state**: `git status` shows clean working directory
+
+### 📊 Phase 6 Final Checklist Update
+- [ ] **Mark Phase 6 complete**: All git integration steps finished
+- [ ] **Update scenario status**: Mark as fully integrated into main branch
+- [ ] **Document completion**: Final commit with completion message
+
+**Phase 6 Complete**: ✅ Scenario fully integrated / ❌ Need to address merge issues
 
 ---
 
