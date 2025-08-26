@@ -1,0 +1,195 @@
+critical_column_patterns:
+  # Identity and Reference Columns
+  - pattern: "id"
+    description: "Identity/identifier columns"
+    case_sensitive: false
+    word_boundary: true  # Only match as complete word (user_id, customer_id, id)
+    
+  - pattern: "key"
+    description: "Key reference columns (foreign keys, primary keys)"
+    case_sensitive: false
+    word_boundary: true  # Only match as complete word (api_key, primary_key, key)
+    
+  - pattern: "uuid"
+    description: "UUID columns"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (record_uuid, uuid_field)
+  
+  # Personally Identifiable Information (PII)
+  - pattern: "email"
+    description: "Email address columns"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (user_email, email_address)
+    
+  - pattern: "name"
+    description: "Name columns (first, last, full names)"
+    case_sensitive: false
+    word_boundary: true  # Only match as complete word (first_name, last_name, name)
+    
+  - pattern: "phone"
+    description: "Phone number columns"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (mobile_phone, phone_number)
+    
+  - pattern: "address"
+    description: "Address information"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (email_address, home_address)
+    
+  - pattern: "ssn"
+    description: "Social Security Numbers"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (last_ssn, ssn_hash)
+    
+  - pattern: "dob"
+    description: "Date of birth columns"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (employee_dob, dob_verified)
+    
+  - pattern: "birth"
+    description: "Birth-related information"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (birth_date, date_of_birth)
+  
+  # Financial and Sensitive Data
+  - pattern: "account"
+    description: "Account information"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (bank_account, account_number)
+    
+  - pattern: "credit"
+    description: "Credit card or credit information"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (credit_score, credit_card)
+    
+  - pattern: "card"
+    description: "Card information (credit, debit)"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (credit_card, card_number)
+    
+  - pattern: "bank"
+    description: "Banking information"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (bank_account, banking_info)
+    
+  - pattern: "salary"
+    description: "Salary or compensation data"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (base_salary, salary_range)
+    
+  - pattern: "payment"
+    description: "Payment information"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (payment_method, last_payment)
+  
+  # Security and Authentication
+  - pattern: "password"
+    description: "Password columns (should be hashed)"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (user_password, password_hash)
+    
+  - pattern: "token"
+    description: "Authentication tokens"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (auth_token, access_token)
+    
+  - pattern: "secret"
+    description: "Secret keys or sensitive configuration"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (api_secret, secret_key)
+  
+  # Audit and Compliance
+  - pattern: "created"
+    description: "Creation timestamps"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (created_at, date_created)
+    
+  - pattern: "modified"
+    description: "Modification timestamps"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (modified_at, last_modified)
+    
+  - pattern: "updated"
+    description: "Update timestamps"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (updated_at, last_updated)
+    
+  - pattern: "deleted"
+    description: "Deletion flags or timestamps"
+    case_sensitive: false
+    word_boundary: false  # Can match as substring (deleted_at, is_deleted)
+    
+  - pattern: "user"
+    description: "User reference columns"
+    case_sensitive: false
+    word_boundary: true  # Only match as complete word (user_id, created_by_user, user)
+
+generic_placeholder_comments:
+  - pattern: "table"
+    description: "Generic placeholder for table comments"
+    case_sensitive: false
+  - pattern: "data"
+    description: "Generic placeholder for data comments"
+    case_sensitive: false
+  - pattern: "temp"
+    description: "Generic placeholder for temp comments"
+    case_sensitive: false
+  - pattern: "test"
+    description: "Generic placeholder for test comments"
+    case_sensitive: false
+  - pattern: "tbd"
+    description: "Generic placeholder for tbd comments"
+    case_sensitive: false
+  - pattern: "todo"
+    description: "Generic placeholder for todo comments"
+    case_sensitive: false
+  - pattern: "placeholder"
+    description: "Generic placeholder for placeholder comments"
+    case_sensitive: false
+  - pattern: "na"
+    description: "Generic placeholder for na comments"
+    case_sensitive: false
+  - pattern: "n/a"
+    description: "Generic placeholder for n/a comments"
+    case_sensitive: false
+
+validation_thresholds:
+  minimum_comment_length: 10
+  required_column_coverage_percent: 80  # Column documentation must meet 80% threshold
+
+comment_validation:
+  count_whitespace: true      # Should leading/trailing whitespace count toward length?
+  unicode_aware: true         # Use Unicode character counting vs byte counting
+
+column_documentation:
+  coverage_threshold: 80          # percentage required for table compliance
+  treat_whitespace_as_undocumented: true  # empty/whitespace comments count as undocumented
+  include_all_columns: true       # count all user-defined columns toward percentage
+
+# Comprehensive Documentation Assessment
+comprehensive_rules:
+  # Production profile - combines all documentation checks
+  required_checks:
+    - "table_has_comment"
+    - "table_comment_length" 
+    - "no_placeholder_comments"
+    - "column_coverage >= 80"
+    - "critical_columns_documented"
+
+placeholder_detection:
+  # Standard industry placeholder patterns (from PEP 350, IDE standards)
+  patterns:
+    - "todo"
+    - "fixme" 
+    - "tbd"
+    - "xxx"
+    - "hack"
+    - "placeholder"
+    - "temp"
+    - "note"  # When used as standalone comment
+    - "bug"
+    - "na"
+    - "n/a"
+  case_sensitive: false        # Case-insensitive matching by default
+  match_type: "substring"      # "substring", "exact", or "word_boundary"
+  allow_mixed_content: false   # Should "Table for users TODO add details" be flagged?

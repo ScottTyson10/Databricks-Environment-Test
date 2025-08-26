@@ -1,0 +1,46 @@
+# Clustering Configuration for Databricks Table Compliance
+# Configuration for various clustering validation scenarios
+
+# Explicit Clustering Columns Detection
+clustering_detection:
+  clustering_property_name: "clusteringColumns"  # Property name in table.properties
+  require_explicit_clustering: false  # Whether clustering is mandatory
+  max_clustering_columns: 4  # Maximum recommended clustering columns
+  
+# Clustering Validation Rules  
+clustering_validation:
+  allow_empty_clustering: true  # Tables without clustering are valid
+  validate_column_limits: true  # Check clustering column count limits
+  
+# Auto-Clustering Detection
+auto_clustering_detection:
+  cluster_by_auto_property: "clusterByAuto"  # Property name for automatic clustering
+  cluster_by_auto_value: "true"  # Expected value when auto-clustering is enabled
+  require_cluster_by_auto: false  # Whether auto-clustering is mandatory
+  
+# Delta Auto-Optimization Detection
+delta_auto_optimization:
+  optimize_write_property: "delta.autoOptimize.optimizeWrite"
+  optimize_write_value: "true"
+  auto_compact_property: "delta.autoOptimize.autoCompact"
+  auto_compact_value: "true"
+  require_both_flags: true  # Both optimizeWrite AND autoCompact needed
+  
+# Clustering Exemptions (Future scenarios)  
+exemptions:
+  honor_exclusion_flag: true  # Honor cluster_exclusion property
+  exclusion_property_name: "cluster_exclusion"  # Property name for exemptions
+  size_threshold_bytes: 1073741824  # 1GB threshold for size-based exemptions  
+  test_size_threshold_bytes: 1048576  # 1MB threshold for integration testing
+  exempt_small_tables: true  # Auto-exempt small tables
+
+# Performance-Based Rules (Future scenarios)
+performance:
+  large_table_clustering_required: true  # Tables over threshold need clustering
+  frequency_analysis_enabled: false  # Enable access pattern analysis (complex)
+  
+# Validation Messages
+validation_messages:
+  no_clustering: "Table has no clustering columns defined"
+  too_many_columns: "Table has too many clustering columns (max: {max_columns})"
+  clustering_detected: "Table has {count} clustering columns: {columns}"

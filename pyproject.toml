@@ -1,0 +1,154 @@
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # Directories
+  \.eggs
+  | \.git
+  | \.pytest_cache
+  | __pycache__
+  | results
+  | logs
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 120
+skip_glob = ["*/results/*", "*/logs/*"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Start permissive, can tighten later
+ignore_missing_imports = true
+exclude = [
+    'results/',
+    'logs/',
+    'conftest.py',
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+]
+markers = [
+    "unit: Unit tests with no external dependencies",
+    "integration: Integration tests that create real Databricks objects",
+    "production: Production tests against real data",
+    "slow: Tests that take a long time to run",
+    "documentation: Documentation compliance tests",
+    "table_comments: Table comment validation",
+    "column_docs: Column documentation validation",
+    "critical_columns: Critical column validation",
+    "comprehensive: Comprehensive documentation validation",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.ruff]
+# Modern Python linter that's faster than flake8
+target-version = "py310"
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "results",
+    "logs",
+    ".pytest_cache",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez
+    "T10",  # flake8-debugger
+    "RET",  # flake8-return
+    "SIM",  # flake8-simplify
+    "PTH",  # flake8-use-pathlib
+]
+ignore = [
+    "E501",  # Line too long (handled by black)
+    "B008",  # Do not perform function calls in argument defaults
+    "B905",  # `zip()` without an explicit `strict=` parameter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # Allow assert in tests
+"conftest.py" = ["F401"]  # Allow unused imports in conftest
+
+[tool.coverage.run]
+source = ["tests"]
+omit = [
+    "*/tests/*",
+    "*/conftest.py",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "databricks-smoke-tests"
+version = "1.0.0"
+description = "pytest-bdd framework for Databricks table documentation compliance testing"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Team", email = "team@example.com"}
+]
+dependencies = [
+    "pytest>=8.3.5",
+    "databricks-sdk>=0.57.0",
+    "python-dotenv==1.1.0",
+    "pytest-bdd>=8.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.5.0",
+    "ruff>=0.1.0",
+    "pytest-cov>=4.1.0",
+    "pytest-html>=4.0.0",
+    "pytest-xdist>=3.3.0",  # For parallel test execution
+]
+
+[project.urls]
+"Homepage" = "https://github.com/yourorg/databricks-smoke-tests"
+"Bug Reports" = "https://github.com/yourorg/databricks-smoke-tests/issues"
+"Source" = "https://github.com/yourorg/databricks-smoke-tests"
