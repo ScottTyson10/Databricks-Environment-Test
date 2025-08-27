@@ -1,24 +1,81 @@
 # Databricks Smoke Tests
 
-A pytest-bdd framework for validating Databricks table documentation compliance using a three-layer testing architecture.
+A pytest-bdd framework for comprehensive Databricks compliance testing using a three-layer testing architecture.
 
 ## Overview
 
-This framework provides automated testing for data governance compliance in Databricks environments, ensuring tables and columns meet documentation standards.
+This framework provides automated testing for Databricks environments to detect data governance and best practice violations. It validates documentation standards, clustering configurations, and other compliance requirements to ensure your Databricks workspace follows organizational policies and performance optimization practices.
 
-## Features
+## Architecture
 
-- **Three-Layer Testing Architecture**:
-  - **Layer 1 (Unit Tests)**: Fast validator logic tests with no external dependencies
-  - **Layer 2 (Integration Tests)**: Real Databricks object validation with test tables
-  - **Layer 3 (Production Tests)**: BDD tests against production data for compliance monitoring
+### Three-Layer Testing Approach
 
-- **Documentation Compliance Scenarios**:
-  - Tables must have comments
-  - Table comments must not be placeholder text
-  - Table comments must meet minimum length requirements
-  - Column documentation coverage thresholds
-  - Critical column documentation validation
+The framework uses a systematic three-layer architecture to ensure comprehensive validation:
+
+1. **Layer 1 (Unit Tests)**: Fast validator logic tests with no external dependencies
+   - Pure Python logic validation
+   - Mock data testing
+   - Rapid feedback during development
+
+2. **Layer 2 (Integration Tests)**: Real Databricks object validation with test tables
+   - Creates actual test tables in Databricks
+   - Tests real SDK interactions
+   - Validates end-to-end data flows
+
+3. **Layer 3 (Production Tests)**: BDD tests against production data for compliance monitoring
+   - Analyzes real production tables
+   - Business-readable scenario validation
+   - Compliance reporting and monitoring
+
+### Key Components
+
+- **Discovery Engine** (`tests/utils/discovery.py`): Discovers tables from Databricks workspace using configurable filters
+- **Validators** (`tests/validators/`): Protocol-based validators for compliance rules
+- **Table Factory** (`tests/fixtures/table_factory.py`): Context manager for creating/cleaning test tables
+- **Step Definitions** (`tests/step_definitions/`): pytest-bdd step implementations for BDD scenarios
+
+## Project Structure
+
+```
+databricks-smoke-tests/
+├── Makefile                    # Primary workflow interface
+├── pyproject.toml              # Python project configuration
+├── requirements.txt            # Production dependencies
+├── requirements-dev.txt        # Development dependencies
+├── tests/
+│   ├── unit/                   # Layer 1: Unit tests
+│   ├── integration/            # Layer 2: Integration tests
+│   ├── features/               # BDD feature files
+│   ├── step_definitions/       # Layer 3: Production step definitions
+│   ├── utils/                  # Discovery engine
+│   ├── validators/             # Compliance validators
+│   └── fixtures/               # Test data factories
+└── results/                    # Test results and reports
+```
+
+## Compliance Scenarios
+
+### Currently Implemented
+
+**Documentation Compliance**:
+- Tables must have comments
+- Table comments must not be placeholder text
+- Table comments must meet minimum length requirements
+- Column documentation coverage thresholds
+- Critical column documentation validation
+- Comprehensive documentation validation
+
+**Clustering Compliance**:
+- Tables with explicit clustering columns
+- Tables with automatic clustering (clusterByAuto)
+- Tables with delta auto-optimization (optimizeWrite + autoCompact)
+
+### Planned Scenarios *(in development)*
+
+- **Jobs Compliance**: Service principal usage, retry configuration, timeout settings
+- **Maintenance Compliance**: Regular VACUUM operations, orphaned table detection
+- **Metadata Compliance**: Required properties, naming conventions, data classification, environment tagging
+- **Performance Optimization**: File size optimization, partitioning strategies, compression settings
 
 ## Quick Start
 
@@ -57,16 +114,27 @@ make test-connection
 ### Running Tests
 
 ```bash
-# Run all three layers
-make test-all-layers
+# Run specific scenario (recommended approach)
+make test-scenario SCENARIO=comment-length      # Run all layers for comment length
+make test-scenario SCENARIO=critical-columns    # Run all layers for critical columns
+make test-scenario SCENARIO=delta-auto-optimization  # Run clustering scenario
 
 # Run specific layers
-make test-unit                       # Layer 1: Unit tests
-make test-integration                 # Layer 2: Integration tests (creates test tables)
-make test-production                  # Layer 3: Production BDD tests
+make test-unit                       # Layer 1: All unit tests
+make test-integration                # Layer 2: All integration tests (creates test tables)
 
-# Run specific scenario
-make test-table-comment-workflow     # Complete table comment validation
+# Run by layer and scenario
+make test-scenario SCENARIO=comment-length LAYER=unit        # Unit tests only
+make test-scenario SCENARIO=comment-length LAYER=integration # Integration tests only
+make test-scenario SCENARIO=comment-length LAYER=production  # BDD tests only
+
+# Debug and development modes
+make test-scenario SCENARIO=comment-length MODE=debug       # Verbose output
+make test-scenario SCENARIO=comment-length MODE=failfast    # Stop on first failure
+
+# List available options
+make list-scenarios        # Show all available scenarios
+make list-test-options     # Show all parameterization options
 ```
 
 ### Development Workflow
@@ -75,14 +143,15 @@ make test-table-comment-workflow     # Complete table comment validation
 # Clean environment
 make clean
 
-# Run unit tests during development
-make test-unit-table-comments
+# Code quality checks
+make quality                         # Format, lint, and type check
 
-# Run integration tests with real tables
-make test-integration-table-comments
+# Environment status
+make show-env                        # Check Databricks connection setup
+make show-results                    # View recent test results
 
-# Validate against production data
-make test-production-table-comments
+# Run all implemented scenarios
+make test-all-scenarios              # Run all scenarios with full layers
 ```
 
 ## Configuration
@@ -121,25 +190,6 @@ DISCOVERY_MAX_TABLES=5000
 DISCOVERY_MAX_PER_SCHEMA=1000
 ```
 
-## Project Structure
-
-```
-databricks-smoke-tests/
-├── Makefile                    # Primary workflow interface
-├── pyproject.toml              # Python project configuration
-├── requirements.txt            # Production dependencies
-├── requirements-dev.txt        # Development dependencies
-├── tests/
-│   ├── unit/                   # Layer 1: Unit tests
-│   ├── integration/            # Layer 2: Integration tests
-│   ├── features/               # BDD feature files
-│   ├── step_definitions/       # Layer 3: Production step definitions
-│   ├── utils/                  # Discovery engine
-│   ├── validators/             # Compliance validators
-│   └── fixtures/               # Test data factories
-└── results/                    # Test results and reports
-```
-
 ## Development
 
 ### Installing Development Dependencies
@@ -151,14 +201,12 @@ pip install -r requirements-dev.txt
 ### Code Quality
 
 ```bash
-# Format code
-black tests/
-isort tests/
+# All-in-one code quality (recommended)
+make quality
 
-# Lint code
-ruff check tests/
-
-# Type checking
+# Individual tools (if needed for specific issues)
+black tests/ --line-length 120
+ruff check tests/ --fix
 mypy tests/
 ```
 
@@ -168,21 +216,24 @@ mypy tests/
 pytest --cov=tests --cov-report=html tests/
 ```
 
-## CI/CD Integration
+## Implemented Scenarios
 
-The framework is designed for CI/CD pipelines:
+The framework currently supports these compliance scenarios:
 
-```bash
-# Validate CI environment
-make ci-validate
+### Documentation Compliance
+- **comment-length**: Table comments must meet minimum length requirements
+- **table-comments**: Tables must have comments
+- **placeholder-detection**: Table comments must not be placeholder text
+- **critical-columns**: Critical columns must have documentation
+- **column-coverage-threshold**: Tables must meet column documentation coverage thresholds
+- **comprehensive**: Comprehensive documentation validation
 
-# Run CI test suite with reports
-make ci-test
-```
+### Clustering Compliance
+- **explicit-clustering-columns**: Tables with clustering should use appropriate column selection
+- **cluster-by-auto**: Tables can use clusterByAuto flag for automatic clustering
+- **delta-auto-optimization**: Tables can use delta auto-optimization for clustering
 
-Future integrations:
-- Azure CI/CD agent pool (see Makefile TODOs)
-- SonarQube for code quality metrics
+Run any scenario with: `make test-scenario SCENARIO=[scenario-name]`
 
 ## Contributing
 
@@ -212,24 +263,17 @@ make show-env
 make test-connection
 ```
 
-### Discovery Issues
+### Test Issues
 
 ```bash
-# Test discovery engine
-make test-discovery
-
-# List discovered tables
-make list-tables
-```
-
-### Test Failures
-
-```bash
-# View test results
+# View recent test results
 make show-results
 
-# Open HTML report
-make open-report
+# Clean test results and start fresh
+make clean
+
+# Run scenario in debug mode for detailed output
+make test-scenario SCENARIO=[name] MODE=debug
 ```
 
 ## License
@@ -240,5 +284,5 @@ MIT License - See LICENSE file for details
 
 For issues and questions:
 - Create an issue in the GitHub repository
-- Check the IMPLEMENTATION_JOURNAL.md for detailed implementation notes
-- Review CLAUDE.md for AI assistant guidance# databricks-pytest
+- Check the research/ directory for detailed implementation notes
+- Review CLAUDE.md for AI assistant guidance
