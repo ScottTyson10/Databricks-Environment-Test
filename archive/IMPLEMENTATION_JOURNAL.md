@@ -338,7 +338,7 @@ Document what works well and what doesn't during the first scenario implementati
 
 ### Clean Implementation Check
 - ❓ Am I solving this requirement from first principles, or copying existing patterns?
-- ❓ Is this the most elegant modern Python approach?
+- ❓ Is this the most elegant modern Python approach, or am I forcing old paradigms?
 - ❓ Would this implementation make sense to someone who's never seen the existing Behave code?
 
 ### Requirements-Driven Check  
@@ -351,7 +351,11 @@ Document what works well and what doesn't during the first scenario implementati
 - ❓ Is this component reusable for other scenarios?
 - ❓ Am I introducing dependencies that violate layer boundaries?
 
-
+### **Red Flags** (Stop and reconsider if you catch yourself doing these):
+- 🚨 Looking at existing Behave step definitions for implementation ideas
+- 🚨 Thinking "this is how the old system handled edge case X"
+- 🚨 Adding complexity to match existing patterns rather than solving requirements
+- 🚨 Importing anything from the parent Behave project
 
 ## Post-Implementation Philosophy Check
 

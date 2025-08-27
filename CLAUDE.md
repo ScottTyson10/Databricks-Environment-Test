@@ -20,20 +20,21 @@ make setup              # Complete environment setup (venv, dirs, .env)
 make test-connection    # Verify Databricks connection
 ```
 
-### Three-Layer Test Execution
+### Modern Parameterized Test Execution
 ```bash
-# Layer 1: Unit Tests (no Databricks dependencies)
-make test-unit                       # All unit tests
-make test-unit-table-comments        # Table comment unit tests only
+# New parameterized system - works for any scenario
+make test-scenario SCENARIO=table-comments                    # All layers
+make test-scenario SCENARIO=comment-length LAYER=unit         # Specific layer
+make test-scenario SCENARIO=placeholder-detection LAYER=integration MODE=debug
 
-# Layer 2: Integration Tests (creates test tables)
-make test-integration-table-comments # Table comment integration tests
+# Traditional layer commands still work
+make test-unit           # All unit tests
+make test-integration    # All integration tests  
+make test-production     # All production tests
 
-# Layer 3: Production Tests (analyzes real data)
-make test-production-table-comments  # Table comment BDD tests
-
-# Run all layers for table comments
-make test-table-comment-workflow
+# Scenario management
+make list-scenarios      # See available scenarios
+make test-all-scenarios  # Run all implemented scenarios
 ```
 
 ### Testing Single Scenarios
@@ -98,7 +99,7 @@ CREATE_TEST_TABLES=true  # Only for integration tests
 
 2. **Check Databricks enforcement behaviors BEFORE implementation** - Review `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md` to understand what Databricks prevents at table creation time. This affects testing strategies (unit-only vs full testing).
 
-3. **Scope discipline** - The framework currently implements only the "Tables must have a comment" scenario. Additional validators can be added following the established patterns.
+3. **Current scenarios implemented** - Framework now includes multiple scenarios: table comments, comment length, placeholder detection, column coverage, critical columns, and comprehensive documentation assessment.
 
 4. **Test table cleanup** - Integration tests use context managers to ensure test tables are always cleaned up, even on failure.
 
@@ -114,16 +115,17 @@ CREATE_TEST_TABLES=true  # Only for integration tests
 
 9. **Layer validation** - After completing each layer, validate using `make test-scenario SCENARIO=[name] LAYER=[unit|integration|production]`. Update the Makefile SCENARIOS list and unit test mapping when adding new scenarios.
 
-10. **Implementation journaling** - Create a dedicated implementation journal in `research/[scenario_name]/[SCENARIO_NAME]_IMPLEMENTATION_JOURNAL.md` to track the complete implementation lifecycle, technical decisions, philosophy checks, and lessons learned.
+10. **Scenario implementation** - Use `SCENARIO_IMPLEMENTATION_CHECKLIST.md` as the single source of truth for implementing new scenarios. Create scenario journals using `research/SCENARIO_JOURNAL_TEMPLATE.md`.
 
-## Scenario Expansion
+## Scenario Implementation Workflow
 
-For implementing additional scenarios, see `SCENARIO_EXPANSION_PLAN.md`. **Key principles:**
+For implementing additional scenarios, use `SCENARIO_IMPLEMENTATION_CHECKLIST.md`. **Key principles:**
 
-- **Research First**: Never implement without thorough Databricks SDK and real data research
+- **Research First**: Never implement without thorough feasibility research using `research/FEASIBILITY_CHECK_TEMPLATE.md`
 - **Check Enforcement Behaviors**: Review `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md` before implementation
 - **Mandatory Philosophy Checks**: Complete philosophy checks after each layer implementation  
 - **Three-Layer Discipline**: Maintain Unit → Integration → Production architecture
+- **Use Parameterized Commands**: Add new scenarios to Makefile SCENARIOS list for automatic command generation
 
 ## Future Integrations
 
