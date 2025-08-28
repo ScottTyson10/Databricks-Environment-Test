@@ -311,6 +311,23 @@ Examples:
 - [ ] **Update status in checklist header**: Show Layer 1 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 2/Layer 1: Unit tests complete"`
 
+### 📋 Phase 2 Code Review Prompt Generation
+- [ ] **Generate Layer 1 review prompt**: Create comprehensive review prompt for another Claude instance
+  ```bash
+  # Use this template structure for the review prompt:
+  # 1. Context & Requirements (scenario description, key requirement)
+  # 2. Project Architecture Context (three-layer framework, existing infrastructure)
+  # 3. Implementation Overview (changes made, files modified)
+  # 4. Core Implementation Files (focus areas for review)
+  # 5. Review Focus Areas (code quality, tests, integration, business logic)
+  # 6. Key Design Decisions (architecture choices made)
+  # 7. Testing Commands (verification steps)
+  # 8. Specific Questions (targeted review questions)
+  ```
+- [ ] **Include implementation context**: Add research findings, feasibility results, architecture decisions
+- [ ] **Document file changes**: Use `git diff --name-only main..HEAD` and `git diff --stat main..HEAD`
+- [ ] **Share for review**: Provide prompt to another Claude instance or team member for validation
+
 **Layer 1 Complete**: ✅ Ready for Layer 2 / ❌ Need to address issues
 
 ---
@@ -400,6 +417,21 @@ Examples:
 - [ ] **Update status in checklist header**: Show Layer 2 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 3/Layer 2: Integration tests complete"`
 
+### 📋 Phase 3 Code Review Prompt Generation
+- [ ] **Generate Layer 2 review prompt**: Create integration-focused review prompt
+  ```bash
+  # Layer 2 review prompt should emphasize:
+  # 1. Real Databricks Integration (table creation, property verification)
+  # 2. Test Table Design (TABLE_SPECS design, realistic test scenarios)
+  # 3. Discovery Engine Integration (proper table discovery and property extraction)
+  # 4. Cleanup & Reliability (context managers, session fixtures, error handling)
+  # 5. Performance & Efficiency (test execution time, resource usage)
+  # 6. Integration Test Patterns (fixture usage, table mapping, discovery validation)
+  ```
+- [ ] **Document table specs created**: List test table specifications and expected outcomes
+- [ ] **Include integration test results**: Test counts, execution time, cleanup verification
+- [ ] **Share for review**: Focus on integration-specific concerns and Databricks behavior
+
 **Layer 2 Complete**: ✅ Ready for Layer 3 / ❌ Need to address issues
 
 ---
@@ -459,6 +491,23 @@ Examples:
 - [ ] **Document production test results**: Real data findings, compliance rates, performance
 - [ ] **Update status in checklist header**: Show Layer 3 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 4/Layer 3: Production tests complete"`
+
+### 📋 Phase 4 Code Review Prompt Generation
+- [ ] **Generate Layer 3/End-to-End review prompt**: Create comprehensive final review prompt
+  ```bash
+  # Layer 3/Final review prompt should cover:
+  # 1. Complete Three-Layer Implementation (unit → integration → production)
+  # 2. BDD Step Definitions (Gherkin scenario implementation, step reusability)
+  # 3. Production Data Validation (real compliance insights, business value)
+  # 4. End-to-End Workflow (discovery → validation → reporting)
+  # 5. Business Requirements Fulfillment (scenario requirements met)
+  # 6. Maintainability & Documentation (code quality, future extensibility)
+  # 7. Performance & Scalability (production data handling, discovery limits)
+  ```
+- [ ] **Document BDD implementation**: Step definitions added/reused, feature file integration
+- [ ] **Include production insights**: Real compliance findings, data patterns discovered
+- [ ] **Final architecture assessment**: Overall implementation quality and maintainability
+- [ ] **Share for comprehensive review**: Full scenario implementation validation
 
 **Layer 3 Complete**: ✅ Ready for Completion / ❌ Need to address issues
 
@@ -609,6 +658,54 @@ Examples:
 
 **Problem**: Tests using different config than validator  
 **Solution**: Ensure both load from same `documentation_config.yaml` file
+
+### Code Review Prompt Issues
+**Problem**: Review prompt lacks sufficient context about implementation decisions  
+**Solution**: Include feasibility research findings, architecture decisions, and existing infrastructure context
+
+**Problem**: Review prompt doesn't match the layer being reviewed  
+**Solution**: Use layer-specific review focus areas (unit tests vs integration vs production concerns)
+
+**Problem**: Missing git commands for reviewers to understand changes  
+**Solution**: Include `git diff --name-only main..HEAD`, `git diff --stat main..HEAD`, and commit history
+
+## Code Review Prompt Template
+
+### Basic Prompt Structure
+```markdown
+**CODE REVIEW REQUEST: [Scenario Name] Implementation**
+
+## Context & Requirements
+[Scenario description, key requirements, business logic]
+
+## Project Architecture Context  
+[Three-layer framework, existing infrastructure, implementation approach]
+
+## Implementation Overview
+[Changes made, files modified, commits, testing results]
+
+## Files to Review
+### Core Implementation (Focus Here)
+[List main code files with line counts and brief descriptions]
+
+### Supporting Files (Secondary Review)
+[Documentation, configuration, template changes]
+
+## Review Focus Areas
+[Layer-specific focus areas with checkboxes]
+
+## Key Design Decisions to Evaluate
+[Architecture choices made and rationale]
+
+## Testing Commands to Verify
+[Commands for reviewer to run and validate]
+
+## Questions for Review
+[Specific targeted questions about implementation]
+
+## Expected Outcomes
+[What reviewer should validate]
+```
 
 ## Notes & Decisions Log
 
