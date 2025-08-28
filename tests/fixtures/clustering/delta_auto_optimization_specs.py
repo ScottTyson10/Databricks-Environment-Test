@@ -149,7 +149,9 @@ def get_delta_auto_optimization_enabled_specs() -> list[DeltaAutoOptimizationTab
 
 def get_delta_auto_optimization_disabled_specs() -> list[DeltaAutoOptimizationTableSpec]:
     """Get all table specs with delta auto-optimization disabled."""
-    return [spec for spec in TABLE_SPECS_DELTA_AUTO_OPTIMIZATION.values() if not spec.expected_has_delta_auto_optimization]
+    return [
+        spec for spec in TABLE_SPECS_DELTA_AUTO_OPTIMIZATION.values() if not spec.expected_has_delta_auto_optimization
+    ]
 
 
 def get_delta_auto_optimization_spec_by_name(name: str) -> DeltaAutoOptimizationTableSpec | None:

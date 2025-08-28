@@ -137,6 +137,36 @@ class ClusteringConfigLoader:
         result = self.get_delta_auto_optimization_config().get("require_both_flags", True)
         return bool(result)
 
+    def get_exemptions_config(self) -> dict[str, Any]:
+        """Get clustering exemptions configuration."""
+        result = self.config.get("exemptions", {})
+        return result if isinstance(result, dict) else {}
+
+    def get_honor_exclusion_flag(self) -> bool:
+        """Get whether to honor cluster_exclusion property."""
+        result = self.get_exemptions_config().get("honor_exclusion_flag", True)
+        return bool(result)
+
+    def get_exclusion_property_name(self) -> str:
+        """Get the property name for clustering exclusions."""
+        result = self.get_exemptions_config().get("exclusion_property_name", "cluster_exclusion")
+        return str(result)
+
+    def get_size_threshold_bytes(self) -> int:
+        """Get size threshold for clustering requirements in bytes."""
+        result = self.get_exemptions_config().get("size_threshold_bytes", 1073741824)  # 1GB default
+        return int(result)
+
+    def get_test_size_threshold_bytes(self) -> int:
+        """Get size threshold for integration testing in bytes."""
+        result = self.get_exemptions_config().get("test_size_threshold_bytes", 1048576)  # 1MB default
+        return int(result)
+
+    def get_exempt_small_tables(self) -> bool:
+        """Get whether small tables are automatically exempt from clustering."""
+        result = self.get_exemptions_config().get("exempt_small_tables", True)
+        return bool(result)
+
 
 _singleton_instance: ClusteringConfigLoader | None = None
 

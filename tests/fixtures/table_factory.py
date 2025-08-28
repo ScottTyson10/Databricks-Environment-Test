@@ -50,6 +50,18 @@ class TestTableSpecWithClustering:
     scenario_type: str = "explicit_clustering"
 
 
+@dataclass(frozen=True)
+class TestTableSpecWithProperties:
+    """Immutable test table specification with custom table properties."""
+
+    name: str
+    comment: str | None
+    expected_pass: bool
+    columns: list[tuple[str, str, str | None]]  # (name, type, comment)
+    properties: dict[str, str]  # Table properties to set
+    scenario_type: str = "table_properties"
+
+
 class TestTableFactory:
     """Context manager for test table lifecycle.
 
@@ -330,6 +342,66 @@ class TestTableFactory:
         logger.info(f"Successfully created test table with delta auto-optimization: {full_name}")
         return full_name
 
+    def create_table_with_properties(self, spec: TestTableSpecWithProperties) -> str:
+        """Create a test table with custom properties.
+
+        Args:
+            spec: Test table specification with properties
+
+        Returns:
+            str: Fully qualified table name
+
+        Raises:
+            ValueError: If required environment variables are missing
+        """
+        full_name = f"{self.catalog}.{self.schema}.{spec.name}"
+        logger.info(f"Creating test table with properties: {full_name}")
+
+        # Build column definitions
+        column_defs = []
+        for col_name, col_type, col_comment in spec.columns:
+            if col_comment:
+                column_defs.append(f"    {col_name} {col_type} COMMENT '{col_comment}'")
+            else:
+                column_defs.append(f"    {col_name} {col_type}")
+
+        # Build table comment
+        table_comment = f"COMMENT '{spec.comment}'" if spec.comment else ""
+
+        # Build properties clause
+        properties_list = []
+        if spec.properties:
+            for prop_key, prop_value in spec.properties.items():
+                properties_list.append(f"    '{prop_key}' = '{prop_value}'")
+
+        properties_clause = ""
+        if properties_list:
+            properties_separator = ",\n"
+            properties_clause = f"TBLPROPERTIES (\n{properties_separator.join(properties_list)}\n)"
+
+        # Construct CREATE TABLE statement
+        column_separator = ",\n"
+        sql = f"""
+        CREATE TABLE {full_name} (
+{column_separator.join(column_defs)}
+        )
+        USING DELTA
+        {table_comment}
+        {properties_clause}
+        """
+
+        logger.debug(f"SQL for table with properties:\n{sql}")
+
+        # Execute table creation
+        warehouse_id = os.getenv("DATABRICKS_WAREHOUSE_ID")
+        if warehouse_id is None:
+            raise ValueError("DATABRICKS_WAREHOUSE_ID environment variable is required")
+
+        self.client.statement_execution.execute_statement(statement=sql, warehouse_id=warehouse_id)
+        self.created_tables.append(spec.name)
+        logger.info(f"Successfully created test table with properties: {full_name}")
+        return full_name
+
 
 # Context manager convenience functions for each scenario
 @contextmanager
@@ -511,22 +583,54 @@ def create_test_tables_for_cluster_by_auto_scenario(client: WorkspaceClient) -> 
 def create_test_tables_for_delta_auto_optimization_scenario(client: WorkspaceClient) -> Iterator[dict[str, str]]:
     """Context manager providing test tables for delta auto-optimization scenario.
 
-    Creates all tables needed for "Tables can use delta auto-optimization for clustering" testing.
+    Creates test tables with various delta auto-optimization configurations and
+    ensures proper cleanup after tests complete (or fail).
 
     Args:
         client: Databricks workspace client
 
     Yields:
-        Dictionary mapping spec names to full table names
+        Dictionary mapping test case names to fully qualified table names
+
+    Example:
+        >>> with create_test_tables_for_delta_auto_optimization_scenario(client) as tables:
+        ...     table_name = tables["both_flags_enabled"]
+        ...     # Run tests with table_name
     """
     from tests.fixtures.clustering.delta_auto_optimization_specs import TABLE_SPECS_DELTA_AUTO_OPTIMIZATION
 
     with TestTableFactory(client) as factory:
-        table_names = {}
-
+        created_tables = {}
         for spec_name, spec in TABLE_SPECS_DELTA_AUTO_OPTIMIZATION.items():
-            full_name = factory.create_table_with_delta_auto_optimization(spec)
-            table_names[spec_name] = full_name
+            table_name = factory.create_table_with_delta_auto_optimization(spec)
+            created_tables[spec_name] = table_name
+        yield created_tables
 
-        logger.info(f"Created {len(table_names)} test tables for delta_auto_optimization scenario")
-        yield table_names
+
+@contextmanager
+def create_test_tables_for_cluster_exclusion_scenario(client: WorkspaceClient) -> Iterator[dict[str, str]]:
+    """Context manager providing test tables for cluster exclusion scenario.
+
+    Creates test tables with various cluster_exclusion property configurations and
+    ensures proper cleanup after tests complete (or fail).
+
+    Args:
+        client: Databricks workspace client
+
+    Yields:
+        Dictionary mapping test case names to fully qualified table names
+
+    Example:
+        >>> with create_test_tables_for_cluster_exclusion_scenario(client) as tables:
+        ...     table_name = tables["excluded_table"]
+        ...     # Run tests with table_name
+    """
+    from tests.fixtures.clustering.cluster_exclusion_specs import TABLE_SPECS_CLUSTER_EXCLUSION
+
+    with TestTableFactory(client) as factory:
+        created_tables = {}
+        for spec_name, spec in TABLE_SPECS_CLUSTER_EXCLUSION.items():
+            table_name = factory.create_table_with_properties(spec)
+            created_tables[spec_name] = table_name
+        logger.info(f"Created {len(created_tables)} test tables for cluster_exclusion scenario")
+        yield created_tables

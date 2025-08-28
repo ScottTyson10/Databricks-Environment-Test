@@ -43,6 +43,13 @@ class ClusteringValidator:
         self.auto_compact_value = self._config_loader.get_auto_compact_value()
         self.require_both_delta_flags = self._config_loader.get_require_both_delta_flags()
 
+        # Load exemption configuration values
+        self.honor_exclusion_flag = self._config_loader.get_honor_exclusion_flag()
+        self.exclusion_property_name = self._config_loader.get_exclusion_property_name()
+        self.size_threshold_bytes = self._config_loader.get_size_threshold_bytes()
+        self.test_size_threshold_bytes = self._config_loader.get_test_size_threshold_bytes()
+        self.exempt_small_tables = self._config_loader.get_exempt_small_tables()
+
     def _parse_clustering_data(self, table: TableInfo) -> list[list[str]]:
         """Parse clustering data from table properties.
 
@@ -287,3 +294,89 @@ class ClusteringValidator:
             "auto_compact_property": self.auto_compact_property,
             "require_both_flags": self.require_both_delta_flags,
         }
+
+    # Clustering exemption methods
+
+    def has_cluster_exclusion(self, table: TableInfo) -> bool:
+        """Check if table has cluster exclusion flag set.
+
+        Based on feasibility research:
+        - Cluster exclusion enabled via TBLPROPERTIES ('cluster_exclusion' = 'true')
+        - Property accessible via table.properties['cluster_exclusion']
+        - Property value is string 'true' when enabled
+        - Exempts table from clustering requirements when enabled
+
+        Args:
+            table: TableInfo object containing table metadata
+
+        Returns:
+            bool: True if table has cluster_exclusion='true', False otherwise
+        """
+        if not self.honor_exclusion_flag:
+            return False
+
+        if table.properties is None:
+            return False
+
+        exclusion_value = table.properties.get(self.exclusion_property_name)
+        if not exclusion_value:
+            return False
+
+        # Handle string comparison (property values are typically strings)
+        return str(exclusion_value).lower() == "true"
+
+    def get_cluster_exclusion_status(self, table: TableInfo) -> str:
+        """Get cluster exclusion status for a table.
+
+        Args:
+            table: TableInfo object containing table metadata
+
+        Returns:
+            str: Exclusion status ("excluded", "not_excluded", "unknown", or "disabled")
+        """
+        if not self.honor_exclusion_flag:
+            return "disabled"
+
+        if table.properties is None:
+            return "unknown"
+
+        exclusion_value = table.properties.get(self.exclusion_property_name)
+
+        if exclusion_value is None:
+            return "not_excluded"  # Property missing = not excluded
+        if str(exclusion_value).lower() == "true":
+            return "excluded"
+        return "not_excluded"
+
+    def is_exempt_from_clustering_requirements(self, table: TableInfo) -> bool:
+        """Check if table is exempt from clustering requirements.
+
+        A table is exempt from clustering requirements if:
+        1. It has cluster_exclusion='true' property, OR
+        2. It's below the size threshold (if exempt_small_tables is enabled)
+
+        Note: Size-based exemption is not implemented in this method as it requires
+        additional table size data not available in TableInfo. This method focuses
+        on the cluster_exclusion property exemption only.
+
+        Args:
+            table: TableInfo object containing table metadata
+
+        Returns:
+            bool: True if table is exempt from clustering requirements, False otherwise
+        """
+        return self.has_cluster_exclusion(table)
+
+    def should_enforce_clustering_requirements(self, table: TableInfo) -> bool:
+        """Check if clustering requirements should be enforced for this table.
+
+        This is the inverse of is_exempt_from_clustering_requirements.
+        Used for validation logic to determine if a table must have clustering.
+
+        Args:
+            table: TableInfo object containing table metadata
+
+        Returns:
+            bool: True if clustering requirements should be enforced, False if exempt
+        """
+        return not self.is_exempt_from_clustering_requirements(table)

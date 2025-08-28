@@ -55,23 +55,17 @@ After reading this full checklist once, use this summary for subsequent scenario
 ## 📁 File Structure for New Scenarios
 ```
 tests/
-├── unit/[domain]/test_[scenario]_validators.py            # Unit tests (domain-specific)
-├── integration/[domain]/test_[scenario]_integration.py    # Integration tests (domain-specific)  
-├── step_definitions/[domain]_steps.py                    # Update with new steps (domain-specific)
-├── fixtures/[domain]/[scenario]_specs.py                 # Add TABLE_SPECS (domain-specific)
-├── validators/[domain].py                                 # Add validator methods (domain-specific)
-└── config/[domain]_config.yaml                          # Add configuration (domain-specific)
+├── unit/documentation/test_[scenario]_validators.py       # Unit tests
+├── integration/documentation/test_[scenario]_integration.py # Integration tests
+├── step_definitions/documentation_steps.py                # Update with new steps
+├── fixtures/table_factory.py                             # Add TABLE_SPECS
+└── config/documentation_config.yaml                      # Add configuration
 
-research/[domain]/[scenario_name]/                         # Use domain-specific research folders
+research/documentation/[scenario_name]/
 ├── [SCENARIO_NAME]_IMPLEMENTATION.md                     # This checklist (archived after completion)
 ├── [SCENARIO_NAME]_JOURNAL.md                           # Scenario journal from template
 ├── [SCENARIO_NAME]_FEASIBILITY_CHECK.md                 # Feasibility analysis
 └── test_scripts/                                        # Any exploration scripts
-
-Examples:
-- Documentation scenarios: research/documentation/[scenario_name]/
-- Clustering scenarios: research/clustering/[scenario_name]/
-- Security scenarios: research/security/[scenario_name]/
 ```
 
 ## Instructions for Use
@@ -92,30 +86,26 @@ Examples:
 - **Scenario Journal** (`research/[area]/[scenario]/[SCENARIO]_JOURNAL.md`): Technical decisions, philosophy checks, lessons learned
 - **Feasibility Check** (`research/[area]/[scenario]/[SCENARIO]_FEASIBILITY_CHECK.md`): Research findings and constraint validation
 
-### 🚨 **CRITICAL REMINDER: Code Review Steps**
-Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is frequently missed:
-- **Phase 2**: Generate Layer 1 (Unit Tests) review prompt  
-- **Phase 3**: Generate Layer 2 (Integration Tests) review prompt
-- **Phase 4**: Generate Layer 3/End-to-End review prompt
-
-⚠️ **These steps are marked with warning symbols and must be completed before proceeding to the next phase**
-
 ---
 
 ## Scenario Information
 
-**Scenario Name**: [e.g., "Table Comments Must Be At Least 10 Characters"]
+**Scenario Name**: "Tables can be exempted from clustering with cluster_exclusion flag"
 
-**Feature File Location**: `tests/features/databricks__documentation__compliance.feature`
+**Feature File Location**: `tests/features/databricks__clustering__compliance.feature`
 
 **Scenario Description**: 
 ```gherkin
-[Copy the exact scenario from the feature file here]
+@clustering  @exclusion
+Scenario: Tables can be exempted from clustering with cluster_exclusion flag
+  Given I discover all accessible tables with clustering filters
+  When I check cluster exclusion exemption flags
+  Then tables with cluster_exclusion=true should be exempt from clustering requirements
 ```
 
-**Implementation Priority**: [1-5, where 1 is simplest]
+**Implementation Priority**: 3 (Medium complexity - requires new clustering domain)
 
-**Estimated Timeline**: [Research: X days, Implementation: Y days]
+**Estimated Timeline**: Research: 1-2 days, Implementation: 2-3 days
 
 **Current Status**: 
 - [ ] Phase 0: Git Workflow Setup - Not Started
@@ -164,21 +154,14 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Create and complete feasibility check**: 
   ```bash
   cp research/FEASIBILITY_CHECK_TEMPLATE.md \
-     research/[domain]/[scenario_name]/[SCENARIO_NAME]_FEASIBILITY_CHECK.md
+     research/documentation/[scenario_name]/[SCENARIO_NAME]_FEASIBILITY_CHECK.md
   ```
   Follow the template completely - it covers SDK research, constraint testing, edge cases
 
-- [ ] **Infrastructure Discovery** (CRITICAL - can save days of work):
-  - [ ] **Check for existing domain infrastructure**: Does clustering/, documentation/, etc. already exist?
-  - [ ] **Find related scenarios**: Search for similar scenarios in feature files and tests
-  - [ ] **Identify configuration domain**: domain-specific config file vs. extending existing config
-  - [ ] **Assess validator architecture**: Which validator class to extend vs. create new
-  
 - [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
 
 - [ ] **DECISION GATE**: Is scenario feasible? 
   - **Decision**: ✅ Feasible / ❌ Not Feasible
-  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
   - **Reasoning**: [If not feasible, document why and STOP here]
 
 ### ⚙️ Configuration Value Extraction
@@ -204,15 +187,11 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 
 - [ ] **Default Values Recommended**: [Values with reasoning]
 
-- [ ] **Update ConfigLoader** (choose appropriate config loader):
+- [ ] **Update ConfigLoader** (`tests/config/config_loader.py`):
   ```python
-  # For documentation scenarios: tests/config/config_loader.py
+  # Add method to load new config section
   def get_placeholder_config(self):
       return self.config.get('placeholder_detection', {})
-      
-  # For clustering scenarios: tests/utils/clustering_config_loader.py  
-  def get_cluster_exclusion_property(self):
-      return self.get_exemptions_config().get('exclusion_property_name', 'cluster_exclusion')
   ```
 
 - [ ] **Configuration Dependencies**: [Any config that affects existing scenarios]
@@ -319,28 +298,6 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Update status in checklist header**: Show Layer 1 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 2/Layer 1: Unit tests complete"`
 
----
-## 🚨 **MANDATORY: Phase 2 Code Review Prompt Generation** 🚨
-
-### 📋 **REQUIRED STEP - DO NOT SKIP** 
-⚠️ **This step is frequently missed - complete it before proceeding to next phase**
-
-- [ ] **Generate Layer 1 review prompt**: Create comprehensive review prompt for another Claude instance
-  ```bash
-  # Use this template structure for the review prompt:
-  # 1. Context & Requirements (scenario description, key requirement)
-  # 2. Project Architecture Context (three-layer framework, existing infrastructure)
-  # 3. Implementation Overview (changes made, files modified)
-  # 4. Core Implementation Files (focus areas for review)
-  # 5. Review Focus Areas (code quality, tests, integration, business logic)
-  # 6. Key Design Decisions (architecture choices made)
-  # 7. Testing Commands (verification steps)
-  # 8. Specific Questions (targeted review questions)
-  ```
-- [ ] **Include implementation context**: Add research findings, feasibility results, architecture decisions
-- [ ] **Document file changes**: Use `git diff --name-only main..HEAD` and `git diff --stat main..HEAD`
-- [ ] **Share for review**: Provide prompt to another Claude instance or team member for validation
-
 **Layer 1 Complete**: ✅ Ready for Layer 2 / ❌ Need to address issues
 
 ---
@@ -430,25 +387,6 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Update status in checklist header**: Show Layer 2 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 3/Layer 2: Integration tests complete"`
 
----
-## 🚨 **MANDATORY: Phase 3 Code Review Prompt Generation** 🚨
-
-### 📋 **REQUIRED STEP - DO NOT SKIP**
-⚠️ **This step is frequently missed - complete it before proceeding to next phase**
-- [ ] **Generate Layer 2 review prompt**: Create integration-focused review prompt
-  ```bash
-  # Layer 2 review prompt should emphasize:
-  # 1. Real Databricks Integration (table creation, property verification)
-  # 2. Test Table Design (TABLE_SPECS design, realistic test scenarios)
-  # 3. Discovery Engine Integration (proper table discovery and property extraction)
-  # 4. Cleanup & Reliability (context managers, session fixtures, error handling)
-  # 5. Performance & Efficiency (test execution time, resource usage)
-  # 6. Integration Test Patterns (fixture usage, table mapping, discovery validation)
-  ```
-- [ ] **Document table specs created**: List test table specifications and expected outcomes
-- [ ] **Include integration test results**: Test counts, execution time, cleanup verification
-- [ ] **Share for review**: Focus on integration-specific concerns and Databricks behavior
-
 **Layer 2 Complete**: ✅ Ready for Layer 3 / ❌ Need to address issues
 
 ---
@@ -508,27 +446,6 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Document production test results**: Real data findings, compliance rates, performance
 - [ ] **Update status in checklist header**: Show Layer 3 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 4/Layer 3: Production tests complete"`
-
----
-## 🚨 **MANDATORY: Phase 4 Code Review Prompt Generation** 🚨
-
-### 📋 **REQUIRED STEP - DO NOT SKIP**
-⚠️ **This step is frequently missed - complete it before proceeding to next phase**
-- [ ] **Generate Layer 3/End-to-End review prompt**: Create comprehensive final review prompt
-  ```bash
-  # Layer 3/Final review prompt should cover:
-  # 1. Complete Three-Layer Implementation (unit → integration → production)
-  # 2. BDD Step Definitions (Gherkin scenario implementation, step reusability)
-  # 3. Production Data Validation (real compliance insights, business value)
-  # 4. End-to-End Workflow (discovery → validation → reporting)
-  # 5. Business Requirements Fulfillment (scenario requirements met)
-  # 6. Maintainability & Documentation (code quality, future extensibility)
-  # 7. Performance & Scalability (production data handling, discovery limits)
-  ```
-- [ ] **Document BDD implementation**: Step definitions added/reused, feature file integration
-- [ ] **Include production insights**: Real compliance findings, data patterns discovered
-- [ ] **Final architecture assessment**: Overall implementation quality and maintainability
-- [ ] **Share for comprehensive review**: Full scenario implementation validation
 
 **Layer 3 Complete**: ✅ Ready for Completion / ❌ Need to address issues
 
@@ -679,54 +596,6 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 
 **Problem**: Tests using different config than validator  
 **Solution**: Ensure both load from same `documentation_config.yaml` file
-
-### Code Review Prompt Issues
-**Problem**: Review prompt lacks sufficient context about implementation decisions  
-**Solution**: Include feasibility research findings, architecture decisions, and existing infrastructure context
-
-**Problem**: Review prompt doesn't match the layer being reviewed  
-**Solution**: Use layer-specific review focus areas (unit tests vs integration vs production concerns)
-
-**Problem**: Missing git commands for reviewers to understand changes  
-**Solution**: Include `git diff --name-only main..HEAD`, `git diff --stat main..HEAD`, and commit history
-
-## Code Review Prompt Template
-
-### Basic Prompt Structure
-```markdown
-**CODE REVIEW REQUEST: [Scenario Name] Implementation**
-
-## Context & Requirements
-[Scenario description, key requirements, business logic]
-
-## Project Architecture Context  
-[Three-layer framework, existing infrastructure, implementation approach]
-
-## Implementation Overview
-[Changes made, files modified, commits, testing results]
-
-## Files to Review
-### Core Implementation (Focus Here)
-[List main code files with line counts and brief descriptions]
-
-### Supporting Files (Secondary Review)
-[Documentation, configuration, template changes]
-
-## Review Focus Areas
-[Layer-specific focus areas with checkboxes]
-
-## Key Design Decisions to Evaluate
-[Architecture choices made and rationale]
-
-## Testing Commands to Verify
-[Commands for reviewer to run and validate]
-
-## Questions for Review
-[Specific targeted questions about implementation]
-
-## Expected Outcomes
-[What reviewer should validate]
-```
 
 ## Notes & Decisions Log
 
