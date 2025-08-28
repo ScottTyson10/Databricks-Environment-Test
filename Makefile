@@ -18,7 +18,7 @@ PYTEST_FAILFAST_OPTS = -v --tb=short -x
 SCENARIO ?= comment-length
 LAYER ?= all
 MODE ?= normal
-SCENARIOS := comment-length table-comments placeholder-detection critical-columns column-coverage-threshold comprehensive explicit-clustering-columns cluster-by-auto delta-auto-optimization
+SCENARIOS := comment-length table-comments placeholder-detection critical-columns column-coverage-threshold comprehensive explicit-clustering-columns cluster-by-auto delta-auto-optimization cluster-exclusion
 
 # Colors
 RED = \033[0;31m
@@ -165,6 +165,7 @@ _test-scenario-layer:
 				explicit-clustering-columns) unit_test="tests/unit/clustering/test_explicit_clustering_validators.py::TestExplicitClusteringColumns" ;; \
 				cluster-by-auto) unit_test="tests/unit/clustering/test_auto_clustering_validators.py::TestAutoClusteringDetection" ;; \
 				delta-auto-optimization) unit_test="tests/unit/clustering/test_delta_auto_optimization_validators.py::TestDeltaAutoOptimizationValidators" ;; \
+				cluster-exclusion) unit_test="tests/unit/clustering/test_cluster_exclusion_validators.py::TestClusterExclusionDetection" ;; \
 				*) unit_test="tests/unit/documentation/ -k $(SCENARIO)" ;; \
 			esac; \
 			case "$(MODE)" in \

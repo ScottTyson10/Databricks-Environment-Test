@@ -1,7 +1,7 @@
 """Integration tests for "Delta auto-optimization" scenario.
 
 Layer 2 tests that create real Databricks tables with delta auto-optimization properties,
-discover them, and validate delta auto-optimization detection. Uses pytest patterns with 
+discover them, and validate delta auto-optimization detection. Uses pytest patterns with
 real Databricks SDK integration.
 """
 
@@ -379,9 +379,7 @@ class TestDeltaAutoOptimizationIntegration:
         discovered_tables = integration_discovery.discover_tables()
 
         # Should find all delta optimization test tables in pytest_test_data schema
-        delta_opt_test_tables = [
-            table for table in discovered_tables if table.table.startswith("delta_opt_test_")
-        ]
+        delta_opt_test_tables = [table for table in discovered_tables if table.table.startswith("delta_opt_test_")]
 
         assert (
             len(delta_opt_test_tables) == expected_count
