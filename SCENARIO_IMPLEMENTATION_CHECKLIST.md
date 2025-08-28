@@ -55,17 +55,23 @@ After reading this full checklist once, use this summary for subsequent scenario
 ## 📁 File Structure for New Scenarios
 ```
 tests/
-├── unit/documentation/test_[scenario]_validators.py       # Unit tests
-├── integration/documentation/test_[scenario]_integration.py # Integration tests
-├── step_definitions/documentation_steps.py                # Update with new steps
-├── fixtures/table_factory.py                             # Add TABLE_SPECS
-└── config/documentation_config.yaml                      # Add configuration
+├── unit/[domain]/test_[scenario]_validators.py            # Unit tests (domain-specific)
+├── integration/[domain]/test_[scenario]_integration.py    # Integration tests (domain-specific)  
+├── step_definitions/[domain]_steps.py                    # Update with new steps (domain-specific)
+├── fixtures/[domain]/[scenario]_specs.py                 # Add TABLE_SPECS (domain-specific)
+├── validators/[domain].py                                 # Add validator methods (domain-specific)
+└── config/[domain]_config.yaml                          # Add configuration (domain-specific)
 
-research/documentation/[scenario_name]/
+research/[domain]/[scenario_name]/                         # Use domain-specific research folders
 ├── [SCENARIO_NAME]_IMPLEMENTATION.md                     # This checklist (archived after completion)
 ├── [SCENARIO_NAME]_JOURNAL.md                           # Scenario journal from template
 ├── [SCENARIO_NAME]_FEASIBILITY_CHECK.md                 # Feasibility analysis
 └── test_scripts/                                        # Any exploration scripts
+
+Examples:
+- Documentation scenarios: research/documentation/[scenario_name]/
+- Clustering scenarios: research/clustering/[scenario_name]/
+- Security scenarios: research/security/[scenario_name]/
 ```
 
 ## Instructions for Use
@@ -150,14 +156,21 @@ research/documentation/[scenario_name]/
 - [ ] **Create and complete feasibility check**: 
   ```bash
   cp research/FEASIBILITY_CHECK_TEMPLATE.md \
-     research/documentation/[scenario_name]/[SCENARIO_NAME]_FEASIBILITY_CHECK.md
+     research/[domain]/[scenario_name]/[SCENARIO_NAME]_FEASIBILITY_CHECK.md
   ```
   Follow the template completely - it covers SDK research, constraint testing, edge cases
 
+- [ ] **Infrastructure Discovery** (CRITICAL - can save days of work):
+  - [ ] **Check for existing domain infrastructure**: Does clustering/, documentation/, etc. already exist?
+  - [ ] **Find related scenarios**: Search for similar scenarios in feature files and tests
+  - [ ] **Identify configuration domain**: domain-specific config file vs. extending existing config
+  - [ ] **Assess validator architecture**: Which validator class to extend vs. create new
+  
 - [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
 
 - [ ] **DECISION GATE**: Is scenario feasible? 
   - **Decision**: ✅ Feasible / ❌ Not Feasible
+  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
   - **Reasoning**: [If not feasible, document why and STOP here]
 
 ### ⚙️ Configuration Value Extraction
@@ -183,11 +196,15 @@ research/documentation/[scenario_name]/
 
 - [ ] **Default Values Recommended**: [Values with reasoning]
 
-- [ ] **Update ConfigLoader** (`tests/config/config_loader.py`):
+- [ ] **Update ConfigLoader** (choose appropriate config loader):
   ```python
-  # Add method to load new config section
+  # For documentation scenarios: tests/config/config_loader.py
   def get_placeholder_config(self):
       return self.config.get('placeholder_detection', {})
+      
+  # For clustering scenarios: tests/utils/clustering_config_loader.py  
+  def get_cluster_exclusion_property(self):
+      return self.get_exemptions_config().get('exclusion_property_name', 'cluster_exclusion')
   ```
 
 - [ ] **Configuration Dependencies**: [Any config that affects existing scenarios]

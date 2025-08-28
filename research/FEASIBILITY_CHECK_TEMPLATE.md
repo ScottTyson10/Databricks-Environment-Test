@@ -24,6 +24,19 @@ Example: If you're testing "comments must be 10+ characters" but Databricks won'
 - [ ] **Data Types**: What data types are returned (string, list, boolean, etc.)?
 - [ ] **SDK Version Requirements**: Are there minimum SDK version requirements?
 
+#### 🔍 **NEW: Architecture & Infrastructure Research**
+- [ ] **Existing Infrastructure Check**: Does this scenario belong to an existing domain (clustering, documentation, etc.)?
+  - Search for related validators: `find tests/ -name "*validator*.py" -exec grep -l "domain_keyword" {} \;`
+  - Check for domain-specific config files: `ls tests/config/*_config.yaml`
+- [ ] **Related Scenarios**: Are there similar scenarios already implemented?
+  - Check feature files for related scenarios: `grep -r "similar_keyword" tests/features/`
+  - Look for existing test patterns: `find tests/ -name "*test*" -exec grep -l "related_concept" {} \;`
+- [ ] **Configuration Domain**: Does this need new config or extend existing config?
+  - Check if domain-specific config exists (e.g., `clustering_config.yaml` vs `documentation_config.yaml`)
+- [ ] **Validator Class**: Which validator should be extended/used?
+  - Document existing validators and their purposes
+  - Determine if new validator needed or existing one can be extended
+
 #### Research Sources (Complete BEFORE any coding):
 - [ ] **Official Databricks SDK Python documentation** - Primary source
 - [ ] **Databricks SQL documentation** - For table properties and clustering
@@ -42,7 +55,21 @@ SDK Research Results:
 - Version requirements: [Minimum SDK versions needed]
 - Potential limitations: [Any restrictions or known issues found]
 - Databricks documentation links: [Save URLs for future reference]
+
+Architecture & Infrastructure Findings:
+- Existing infrastructure: [Domain, validators, config files found]
+- Related scenarios: [Similar scenarios already implemented]
+- Configuration approach: [New config section vs. existing file]
+- Validator approach: [Which validator to extend/use]
+- Complexity assessment: [Simple property check vs. complex business logic]
+- Implementation patterns: [Existing patterns that can be reused]
 ```
+
+**🎯 SCENARIO COMPLEXITY ASSESSMENT** (helps plan implementation approach):
+- [ ] **Simple Property Check** (like cluster_exclusion): Check table.properties for flag value
+- [ ] **Business Logic Validation** (like column coverage): Requires calculations and thresholds
+- [ ] **Cross-Table Analysis** (like relationship validation): Requires multiple table access
+- [ ] **External Dependencies** (like access patterns): Requires additional data sources
 
 **✅ RESEARCH COMPLETE CHECKPOINT**: Only proceed to Step 2 after completing all online research above.
 
