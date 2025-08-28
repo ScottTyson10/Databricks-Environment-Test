@@ -197,7 +197,7 @@ _test-scenario-layer:
 				explicit-clustering-columns) marker="clustering_columns"; step_file="tests/step_definitions/clustering_steps.py" ;; \
 				cluster-by-auto) marker="auto_clustering"; step_file="tests/step_definitions/clustering_steps.py" ;; \
 				delta-auto-optimization) marker="delta_auto_optimization"; step_file="tests/step_definitions/clustering_steps.py" ;; \
-				cluster-exclusion) marker="exclusion"; step_file="tests/step_definitions/clustering_steps.py" ;; \
+				cluster-exclusion) marker="cluster_exclusion"; step_file="tests/step_definitions/clustering_steps.py" ;; \
 				*) marker="$(SCENARIO)"; step_file="tests/step_definitions/documentation_steps.py" ;; \
 			esac; \
 			case "$(MODE)" in \

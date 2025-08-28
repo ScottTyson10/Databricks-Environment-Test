@@ -24,7 +24,7 @@ Feature: Databricks Clustering Compliance
 
   # Cluster Exclusion Scenarios
 
-  @clustering  @exclusion
+  @clustering  @exclusion  @cluster_exclusion
   Scenario: Tables can be exempted from clustering with cluster_exclusion flag
     Given I discover all accessible tables with clustering filters
     When I check cluster exclusion exemption flags
