@@ -178,6 +178,7 @@ _test-scenario-layer:
 				explicit-clustering-columns) integration_file="tests/integration/clustering/test_explicit_clustering_columns_integration.py" ;; \
 				cluster-by-auto) integration_file="tests/integration/clustering/test_cluster_by_auto_integration.py" ;; \
 				delta-auto-optimization) integration_file="tests/integration/clustering/test_delta_auto_optimization_integration.py" ;; \
+				cluster-exclusion) integration_file="tests/integration/clustering/test_cluster_exclusion_integration.py" ;; \
 				*) integration_file="tests/integration/documentation/test_$$(echo '$(SCENARIO)' | sed 's/-/_/g')_integration.py" ;; \
 			esac; \
 			case "$(MODE)" in \
