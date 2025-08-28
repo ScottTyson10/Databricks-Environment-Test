@@ -92,6 +92,14 @@ Examples:
 - **Scenario Journal** (`research/[area]/[scenario]/[SCENARIO]_JOURNAL.md`): Technical decisions, philosophy checks, lessons learned
 - **Feasibility Check** (`research/[area]/[scenario]/[SCENARIO]_FEASIBILITY_CHECK.md`): Research findings and constraint validation
 
+### 🚨 **CRITICAL REMINDER: Code Review Steps**
+Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is frequently missed:
+- **Phase 2**: Generate Layer 1 (Unit Tests) review prompt  
+- **Phase 3**: Generate Layer 2 (Integration Tests) review prompt
+- **Phase 4**: Generate Layer 3/End-to-End review prompt
+
+⚠️ **These steps are marked with warning symbols and must be completed before proceeding to the next phase**
+
 ---
 
 ## Scenario Information
@@ -311,7 +319,12 @@ Examples:
 - [ ] **Update status in checklist header**: Show Layer 1 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 2/Layer 1: Unit tests complete"`
 
-### 📋 Phase 2 Code Review Prompt Generation
+---
+## 🚨 **MANDATORY: Phase 2 Code Review Prompt Generation** 🚨
+
+### 📋 **REQUIRED STEP - DO NOT SKIP** 
+⚠️ **This step is frequently missed - complete it before proceeding to next phase**
+
 - [ ] **Generate Layer 1 review prompt**: Create comprehensive review prompt for another Claude instance
   ```bash
   # Use this template structure for the review prompt:
@@ -417,7 +430,11 @@ Examples:
 - [ ] **Update status in checklist header**: Show Layer 2 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 3/Layer 2: Integration tests complete"`
 
-### 📋 Phase 3 Code Review Prompt Generation
+---
+## 🚨 **MANDATORY: Phase 3 Code Review Prompt Generation** 🚨
+
+### 📋 **REQUIRED STEP - DO NOT SKIP**
+⚠️ **This step is frequently missed - complete it before proceeding to next phase**
 - [ ] **Generate Layer 2 review prompt**: Create integration-focused review prompt
   ```bash
   # Layer 2 review prompt should emphasize:
@@ -492,7 +509,11 @@ Examples:
 - [ ] **Update status in checklist header**: Show Layer 3 complete
 - [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 4/Layer 3: Production tests complete"`
 
-### 📋 Phase 4 Code Review Prompt Generation
+---
+## 🚨 **MANDATORY: Phase 4 Code Review Prompt Generation** 🚨
+
+### 📋 **REQUIRED STEP - DO NOT SKIP**
+⚠️ **This step is frequently missed - complete it before proceeding to next phase**
 - [ ] **Generate Layer 3/End-to-End review prompt**: Create comprehensive final review prompt
   ```bash
   # Layer 3/Final review prompt should cover:
