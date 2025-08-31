@@ -489,9 +489,7 @@ def verify_cluster_exclusion_exemption(clustering_context: ClusteringContext):
 
     # Report on tables with cluster exclusion
     exempt_tables = [
-        result
-        for result in clustering_context.validation_results.values()
-        if result["has_cluster_exclusion"]
+        result for result in clustering_context.validation_results.values() if result["has_cluster_exclusion"]
     ]
 
     if exempt_tables:
@@ -509,7 +507,9 @@ def verify_cluster_exclusion_exemption(clustering_context: ClusteringContext):
     )
     enforcement_percentage = (tables_requiring_clustering / total_tables * 100) if total_tables > 0 else 0
 
-    logger.info(f"  Tables requiring clustering enforcement: {tables_requiring_clustering} ({enforcement_percentage:.1f}%)")
+    logger.info(
+        f"  Tables requiring clustering enforcement: {tables_requiring_clustering} ({enforcement_percentage:.1f}%)"
+    )
 
     # For the foundational scenario, we verify that cluster exclusion detection works
     # and report on the current state rather than enforcing strict compliance
