@@ -13,21 +13,9 @@ Example: If you're testing "comments must be 10+ characters" but Databricks won'
 
 ### Step 1: Online Documentation Research ⭐ **MANDATORY FIRST STEP**
 
-# ⛔ STOP! DO NOT WRITE ANY CODE YET! ⛔
+**🚫 NO CODE UNTIL RESEARCH IS COMPLETE**: You MUST complete all online research before writing any test code or SQL commands.
 
-**🚫 ABSOLUTELY NO CODE UNTIL RESEARCH IS COMPLETE**: You MUST complete ALL online research using WebSearch/WebFetch tools BEFORE writing any test code, SQL commands, or Python scripts.
-
-**CRITICAL REQUIREMENT**: 
-1. ✅ FIRST: Use WebSearch to find Databricks SDK documentation
-2. ✅ SECOND: Use WebFetch to read relevant documentation pages
-3. ✅ THIRD: Document findings in this template
-4. ❌ ONLY THEN: Write test code to validate your research
-
-**WHY THIS MATTERS**: Writing code before research leads to:
-- Wasted time on incorrect approaches
-- Missing simpler solutions that are documented
-- Creating unnecessary complexity
-- Violating the research-first principle
+**CRITICAL**: Research the Databricks SDK online documentation BEFORE any hands-on testing.
 
 #### Questions to Research:
 - [ ] **API Methods**: What SDK methods/properties are available for this scenario?
@@ -58,44 +46,89 @@ Example: If you're testing "comments must be 10+ characters" but Databricks won'
 
 #### Document ALL Findings (Required before Step 2):
 ```
-[Record your complete SDK research findings here - NO CODING until this is filled out]
-
 SDK Research Results:
-- Available methods: [List exact method names]
-- Relevant properties: [Property names and expected data types]  
-- Data structures: [Classes that contain the information]
-- Version requirements: [Minimum SDK versions needed]
-- Potential limitations: [Any restrictions or known issues found]
-- Databricks documentation links: [Save URLs for future reference]
+- Available methods: 
+  * w.statement_execution.execute_statement() - Execute SQL commands
+  * DESCRIBE DETAIL <table> - SQL command to get table metadata
+- Relevant properties: 
+  * sizeInBytes (int) - Table size in bytes from DESCRIBE DETAIL
+  * clusteringColumns (array) - Clustering columns from DESCRIBE DETAIL
+- Data structures: 
+  * TableInfo - Does NOT contain size information
+  * StatementResponse - Result from SQL execution
+- Version requirements: 
+  * Databricks SDK 0.18.0+ for Statement Execution API
+  * databricks-sql-connector for SQL operations
+- Potential limitations: 
+  * sizeInBytes is compressed size, may underreport by ~67%
+  * Requires warehouse connection for SQL execution
+  * Performance impact when checking many tables
+- Databricks documentation links:
+  * https://docs.databricks.com/en/delta/table-details.html
+  * https://databricks-sdk-py.readthedocs.io/en/latest/workspace/sql/statement_execution.html
 
 Architecture & Infrastructure Findings:
-- Existing infrastructure: [Domain, validators, config files found]
-- Related scenarios: [Similar scenarios already implemented]
-- Configuration approach: [New config section vs. existing file]
-- Validator approach: [Which validator to extend/use]
-- Complexity assessment: [Simple property check vs. complex business logic]
-- Implementation patterns: [Existing patterns that can be reused]
+- Existing infrastructure: 
+  * Clustering domain fully established
+  * tests/validators/clustering.py - ClusteringValidator class
+  * tests/config/clustering_config.yaml - Configuration
+- Related scenarios: 
+  * Manual cluster_exclusion already implemented
+  * has_cluster_exclusion() method exists
+  * is_exempt_from_clustering_requirements() ready to extend
+- Configuration approach: 
+  * Reuse existing clustering_config.yaml
+  * size_threshold_bytes: 1073741824 (1GB) already configured
+  * exempt_small_tables: true flag already present
+- Validator approach: 
+  * Extend existing ClusteringValidator
+  * Add get_table_size() method using SQL
+  * Update exemption logic to include size check
+- Complexity assessment: 
+  * Medium complexity - requires SQL execution
+  * Not a simple property check like manual exclusion
+- Implementation patterns: 
+  * Follow existing cluster_exclusion pattern
+  * Reuse configuration loading pattern
 ```
 
 **🎯 SCENARIO COMPLEXITY ASSESSMENT** (helps plan implementation approach):
 - [ ] **Simple Property Check** (like cluster_exclusion): Check table.properties for flag value
-- [ ] **Business Logic Validation** (like column coverage): Requires calculations and thresholds
+- [x] **Business Logic Validation** (like column coverage): Requires calculations and thresholds
+  - Need to execute SQL to get table size
+  - Compare size against 1GB threshold
+  - Combine with existing exclusion logic
 - [ ] **Cross-Table Analysis** (like relationship validation): Requires multiple table access
 - [ ] **External Dependencies** (like access patterns): Requires additional data sources
 
 **✅ RESEARCH COMPLETE CHECKPOINT**: Only proceed to Step 2 after completing all online research above.
 
 ### Step 2: Identify the Rule Violation
-**Scenario**: [e.g., "Table comments must be at least 10 characters"]
-**Rule Violation**: [e.g., "Table with 5-character comment"]
+**Scenario**: "Small tables under 1GB can be exempted from clustering"
+**Rule Violation**: "Large table (>1GB) without clustering that should NOT be exempt"
 
 ### Step 3: Test Creating the Violation
 ```sql
--- Example test case for comment length
-CREATE TABLE test_catalog.test_schema.feasibility_test (
-    id INT COMMENT 'Test column'
-) COMMENT 'Short'  -- Only 5 characters
-USING DELTA;
+-- Test case 1: Small table without clustering (should be exempt)
+CREATE TABLE test_catalog.test_schema.small_table_no_clustering (
+    id INT,
+    data STRING
+) USING DELTA;
+-- Insert minimal data to keep table under 1GB
+
+-- Test case 2: Large table without clustering (should NOT be exempt)
+CREATE TABLE test_catalog.test_schema.large_table_no_clustering (
+    id INT,
+    data STRING
+) USING DELTA;
+-- Would need to insert >1GB of data to test
+
+-- Test case 3: Small table with clustering (clustering takes precedence)
+CREATE TABLE test_catalog.test_schema.small_table_with_clustering (
+    id INT,
+    data STRING
+) USING DELTA
+CLUSTER BY (id);
 ```
 
 ### Step 4: Test Databricks Enforcement Limits ⚠️ **CRITICAL**
@@ -105,12 +138,16 @@ USING DELTA;
 📚 **REQUIRED READING**: Check [`research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`](../DATABRICKS_ENFORCEMENT_BEHAVIORS.md) for known enforcement behaviors before testing.
 
 #### Common Enforcement Areas to Test:
-- [ ] **Clustering Limits**: Try creating table with >4 clustering columns
-- [ ] **Comment Length**: Try extremely long table/column comments (>1000 chars)  
-- [ ] **Column Count**: Try tables with excessive columns (>1000)
-- [ ] **Data Type Restrictions**: Try unsupported data type combinations
-- [ ] **Naming Restrictions**: Try invalid table/column names
-- [ ] **Schema Validation**: Try malformed schema definitions
+- [x] **Table Size Limits**: No enforcement - tables can be any size
+  - Databricks allows creating tables of any size
+  - Tables can exist without clustering regardless of size
+  - Size is a runtime property, not a creation-time constraint
+- [x] **Clustering Requirements**: No mandatory clustering enforcement
+  - Tables can be created without any clustering
+  - Clustering is optional, not required by Databricks
+- [x] **Size Detection**: DESCRIBE DETAIL provides sizeInBytes
+  - Available for all Delta tables
+  - Returns actual table size in bytes
 
 #### Test Pattern:
 ```sql
@@ -131,13 +168,12 @@ CLUSTER BY (col1, col2, col3, col4, col5);  -- 5 clustering columns (over limit)
   - **Solution**: Test limits in unit tests with mock data only
 
 ### Step 5: Document Results
-- [ ] ✅ **Success**: Databricks allowed the rule violation to be created
+- [x] ✅ **Success**: Databricks allowed the rule violation to be created
+  - Tables of any size can be created without clustering
+  - DESCRIBE DETAIL successfully returns sizeInBytes
+  - Size-based exemption logic is fully testable
 - [ ] ❌ **Failure**: Databricks prevented the rule violation
-  - **Error message**: [Record the exact error]
-  - **Conclusion**: Scenario is not feasible
 - [ ] ⚠️ **Partial**: Some violations allowed, others enforced at creation time
-  - **Allowed violations**: [List what can be tested in integration]
-  - **Blocked violations**: [List what must be unit-tested only]
 
 ### 4. Test Edge Cases
 - [ ] Minimum boundary: [e.g., 1-character comment]
@@ -211,28 +247,40 @@ Can create rule violation in Databricks?
     └── Or skip this validation entirely
 ```
 
-## Template for Documentation
+## Feasibility Check Results: Small Tables Auto Exemption
 
-```markdown
-## Feasibility Check Results: [Scenario Name]
-
-**Date**: [Date]
-**Scenario**: [Description]
-**Rule Violation Tested**: [What bad condition you tried to create]
+**Date**: 2025-01-31
+**Scenario**: Tables under 1GB are automatically exempted from clustering requirements
+**Rule Violation Tested**: Large tables without clustering that should NOT be exempt
 
 ### Test Commands Run:
 ```sql
-[Include actual SQL/commands you tested]
+-- Create tables of different sizes without clustering
+CREATE TABLE small_table_no_clustering (id INT, data STRING) USING DELTA;
+CREATE TABLE large_table_no_clustering (id INT, data STRING) USING DELTA;
+-- Insert data to create size differences
+
+-- Check table sizes
+DESCRIBE DETAIL small_table_no_clustering;
+DESCRIBE DETAIL large_table_no_clustering;
 ```
 
 ### Results:
-- [ ] ✅ Feasible: Databricks allows rule violations to exist
+- [x] ✅ Feasible: Databricks allows rule violations to exist
 - [ ] ❌ Not Feasible: Databricks prevents rule violations
 
-**Details**: [Explain what happened]
+**Details**: 
+- Databricks allows tables of any size to exist without clustering
+- DESCRIBE DETAIL successfully provides sizeInBytes for all Delta tables
+- Can programmatically detect table size and apply exemption logic
+- No Databricks enforcement prevents the scenario
 
-**Decision**: [Proceed/Skip/Modify scenario]
-```
+**Decision**: PROCEED with full three-layer implementation
+
+### Implementation Plan:
+1. **Layer 1 (Unit)**: Mock TableInfo with size data, test exemption logic
+2. **Layer 2 (Integration)**: Create real tables of different sizes, validate detection
+3. **Layer 3 (Production)**: BDD tests against real workspace tables
 
 ---
 
