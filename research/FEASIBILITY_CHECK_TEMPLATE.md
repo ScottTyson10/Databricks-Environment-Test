@@ -86,7 +86,27 @@ Architecture & Infrastructure Findings:
 - [ ] **Cross-Table Analysis** (like relationship validation): Requires multiple table access
 - [ ] **External Dependencies** (like access patterns): Requires additional data sources
 
-**✅ RESEARCH COMPLETE CHECKPOINT**: Only proceed to Step 2 after completing all online research above.
+#### ✅ **MANDATORY RESEARCH VALIDATION CHECKPOINT** ✅
+
+**🔍 STEP 1A VALIDATION** - Infrastructure & Architecture Discovery Complete:
+- [ ] **Existing Infrastructure Check** - Documented what domain infrastructure exists
+- [ ] **Related Scenarios** - Identified similar scenarios already implemented  
+- [ ] **Configuration Domain** - Determined config approach (new/extend existing)
+- [ ] **Validator Class** - Identified which validator to extend/use
+
+**🔍 STEP 1B VALIDATION** - Databricks SDK & API Research Complete:
+- [ ] **API Methods** - Documented exact SDK methods/properties available
+- [ ] **Data Structures** - Identified relevant classes and data structures
+- [ ] **Property Names** - Listed exact property/attribute names to check
+- [ ] **Data Types** - Documented return types (string, list, boolean, etc.)
+- [ ] **SDK Version Requirements** - Identified minimum versions needed
+- [ ] **Research Sources** - Completed all documentation sources research
+
+**📝 DOCUMENTATION VALIDATION**:
+- [ ] **All findings documented** - Complete research findings section filled out
+- [ ] **Scenario complexity assessed** - Implementation approach identified
+
+⛔ **DO NOT PROCEED** until ALL boxes above are checked! Incomplete research leads to failed implementations.
 
 #### 🚨 **CRITICAL DECISION GATE** 🚨
 - [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
