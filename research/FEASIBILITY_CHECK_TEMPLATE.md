@@ -43,15 +43,6 @@ This step MUST be done first to avoid rebuilding existing infrastructure!
   - Document existing validators and their purposes
   - Determine if new validator needed or existing one can be extended
 
-#### 🚨 **CRITICAL DECISION GATE** 🚨
-- [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
-- [ ] **Infrastructure Assessment**: 
-  - **Decision**: ✅ Feasible / ❌ Not Feasible
-  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
-  - **Reasoning**: [If not feasible, document why and STOP here]
-
-⛔ **MANDATORY CHECKPOINT**: Only proceed if scenario is feasible and infrastructure approach is clear!
-
 #### 🔍 **STEP 1B: Databricks SDK & API Research**
 
 #### API & SDK Questions to Research:
@@ -96,6 +87,15 @@ Architecture & Infrastructure Findings:
 - [ ] **External Dependencies** (like access patterns): Requires additional data sources
 
 **✅ RESEARCH COMPLETE CHECKPOINT**: Only proceed to Step 2 after completing all online research above.
+
+#### 🚨 **CRITICAL DECISION GATE** 🚨
+- [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
+- [ ] **Infrastructure Assessment**: 
+  - **Decision**: ✅ Feasible / ❌ Not Feasible
+  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
+  - **Reasoning**: [If not feasible, document why and STOP here]
+
+⛔ **MANDATORY CHECKPOINT**: Only proceed if scenario is feasible and infrastructure approach is clear!
 
 ### Step 2: Identify the Rule Violation
 **Scenario**: [e.g., "Table comments must be at least 10 characters"]
