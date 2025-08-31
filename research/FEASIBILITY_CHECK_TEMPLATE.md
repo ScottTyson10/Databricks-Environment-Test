@@ -106,16 +106,9 @@ Architecture & Infrastructure Findings:
 - [ ] **All findings documented** - Complete research findings section filled out
 - [ ] **Scenario complexity assessed** - Implementation approach identified
 
-⛔ **DO NOT PROCEED** until ALL boxes above are checked! Incomplete research leads to failed implementations.
-
-#### 🚨 **CRITICAL DECISION GATE** 🚨
 - [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
-- [ ] **Infrastructure Assessment**: 
-  - **Decision**: ✅ Feasible / ❌ Not Feasible
-  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
-  - **Reasoning**: [If not feasible, document why and STOP here]
 
-⛔ **MANDATORY CHECKPOINT**: Only proceed if scenario is feasible and infrastructure approach is clear!
+⛔ **DO NOT PROCEED** until ALL boxes above are checked! Incomplete research leads to failed implementations.
 
 ### Step 2: Identify the Rule Violation
 **Scenario**: [e.g., "Table comments must be at least 10 characters"]
@@ -233,7 +226,7 @@ CREATE TABLE test (
 ```
 
 ## Decision Tree
-
+#### 🚨 **CRITICAL DECISION GATE** 🚨
 ```
 Can create rule violation in Databricks?
 ├── YES → Scenario is feasible, proceed with implementation

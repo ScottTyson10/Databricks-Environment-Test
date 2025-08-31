@@ -306,17 +306,15 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   - [ ] Issues addressed: [Document issues and how resolved]
   - [ ] Philosophy check re-run until passed
 
-### 📊 Phase 2 Checklist Update
-- [ ] **Update implementation checklist**: Mark all Phase 2/Layer 1 items as complete
-- [ ] **Document test results**: Add test counts, coverage, and performance metrics
-- [ ] **Update status in checklist header**: Show Layer 1 complete
-- [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 2/Layer 1: Unit tests complete"`
+### 📊 Phase 2 Progress Commit
+- [ ] **Commit implementation work**: `git add . && git commit -m "Phase 2/Layer 1: Complete unit tests implementation"`
+- [ ] **Document implementation details**: Record key methods, test counts, architecture decisions
 
 ---
 ## 🚨 **MANDATORY: Phase 2 Code Review Prompt Generation** 🚨
 
 ### 📋 **REQUIRED STEP - DO NOT SKIP** 
-⚠️ **This step is frequently missed - complete it before proceeding to next phase**
+⚠️ **Complete code review BEFORE marking phase as done - allows for feedback and changes**
 
 - [ ] **Generate Layer 1 review prompt**: Create comprehensive review prompt for another Claude instance
   ```bash
@@ -333,6 +331,14 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Include implementation context**: Add research findings, feasibility results, architecture decisions
 - [ ] **Document file changes**: Use `git diff --name-only main..HEAD` and `git diff --stat main..HEAD`
 - [ ] **Share for review**: Provide prompt to another Claude instance or team member for validation
+- [ ] **Wait for review feedback**: Address any issues or questions raised
+- [ ] **Make any necessary changes**: Based on review feedback
+
+### 📊 Phase 2 Completion (After Code Review)
+- [ ] **Update implementation checklist**: Mark all Phase 2/Layer 1 items as complete
+- [ ] **Document final test results**: Add final test counts, coverage, and performance metrics
+- [ ] **Update status in checklist header**: Show Layer 1 complete
+- [ ] **Final commit**: `git add [checklist].md && git commit -m "Phase 2/Layer 1: Complete after code review"`
 
 **Layer 1 Complete**: ✅ Ready for Layer 2 / ❌ Need to address issues
 
@@ -417,17 +423,15 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   - [ ] Issues addressed: [Document issues and how resolved]
   - [ ] Philosophy check re-run until passed
 
-### 📊 Phase 3 Checklist Update
-- [ ] **Update implementation checklist**: Mark all Phase 3/Layer 2 items as complete
-- [ ] **Document integration test results**: Tables created, test counts, cleanup verification
-- [ ] **Update status in checklist header**: Show Layer 2 complete
-- [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 3/Layer 2: Integration tests complete"`
+### 📊 Phase 3 Progress Commit
+- [ ] **Commit implementation work**: `git add . && git commit -m "Phase 3/Layer 2: Complete integration tests implementation"`
+- [ ] **Document implementation details**: Record table specs, integration patterns, test results
 
 ---
 ## 🚨 **MANDATORY: Phase 3 Code Review Prompt Generation** 🚨
 
 ### 📋 **REQUIRED STEP - DO NOT SKIP**
-⚠️ **This step is frequently missed - complete it before proceeding to next phase**
+⚠️ **Complete code review BEFORE marking phase as done - allows for feedback and changes**
 - [ ] **Generate Layer 2 review prompt**: Create integration-focused review prompt
   ```bash
   # Layer 2 review prompt should emphasize:
@@ -441,6 +445,14 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Document table specs created**: List test table specifications and expected outcomes
 - [ ] **Include integration test results**: Test counts, execution time, cleanup verification
 - [ ] **Share for review**: Focus on integration-specific concerns and Databricks behavior
+- [ ] **Wait for review feedback**: Address any integration-specific issues raised
+- [ ] **Make any necessary changes**: Based on review feedback
+
+### 📊 Phase 3 Completion (After Code Review)
+- [ ] **Update implementation checklist**: Mark all Phase 3/Layer 2 items as complete
+- [ ] **Document final integration results**: Final table specs, test counts, cleanup verification
+- [ ] **Update status in checklist header**: Show Layer 2 complete
+- [ ] **Final commit**: `git add [checklist].md && git commit -m "Phase 3/Layer 2: Complete after code review"`
 
 **Layer 2 Complete**: ✅ Ready for Layer 3 / ❌ Need to address issues
 
@@ -496,17 +508,15 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   - [ ] Issues addressed: [Document issues and how resolved]
   - [ ] Philosophy check re-run until passed
 
-### 📊 Phase 4 Checklist Update
-- [ ] **Update implementation checklist**: Mark all Phase 4/Layer 3 items as complete
-- [ ] **Document production test results**: Real data findings, compliance rates, performance
-- [ ] **Update status in checklist header**: Show Layer 3 complete
-- [ ] **Commit checklist progress**: `git add [checklist].md && git commit -m "Phase 4/Layer 3: Production tests complete"`
+### 📊 Phase 4 Progress Commit
+- [ ] **Commit implementation work**: `git add . && git commit -m "Phase 4/Layer 3: Complete production tests implementation"`
+- [ ] **Document implementation details**: Record BDD steps, production insights, end-to-end results
 
 ---
 ## 🚨 **MANDATORY: Phase 4 Code Review Prompt Generation** 🚨
 
 ### 📋 **REQUIRED STEP - DO NOT SKIP**
-⚠️ **This step is frequently missed - complete it before proceeding to next phase**
+⚠️ **Complete code review BEFORE marking phase as done - allows for feedback and changes**
 - [ ] **Generate Layer 3/End-to-End review prompt**: Create comprehensive final review prompt
   ```bash
   # Layer 3/Final review prompt should cover:
@@ -522,6 +532,14 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 - [ ] **Include production insights**: Real compliance findings, data patterns discovered
 - [ ] **Final architecture assessment**: Overall implementation quality and maintainability
 - [ ] **Share for comprehensive review**: Full scenario implementation validation
+- [ ] **Wait for review feedback**: Address any end-to-end issues raised
+- [ ] **Make any necessary changes**: Based on comprehensive review feedback
+
+### 📊 Phase 4 Completion (After Code Review)
+- [ ] **Update implementation checklist**: Mark all Phase 4/Layer 3 items as complete
+- [ ] **Document final production results**: Real data findings, compliance rates, performance
+- [ ] **Update status in checklist header**: Show Layer 3 complete
+- [ ] **Final commit**: `git add [checklist].md && git commit -m "Phase 4/Layer 3: Complete after code review"`
 
 **Layer 3 Complete**: ✅ Ready for Completion / ❌ Need to address issues
 
