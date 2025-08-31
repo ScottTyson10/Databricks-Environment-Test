@@ -324,12 +324,14 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   # 3. Implementation Overview (changes made, files modified)
   # 4. Core Implementation Files (focus areas for review)
   # 5. Review Focus Areas (code quality, tests, integration, business logic)
-  # 6. Key Design Decisions (architecture choices made)
-  # 7. Testing Commands (verification steps)
-  # 8. Specific Questions (targeted review questions)
+  # 6. Scenario Logic Validation (CRITICAL: Does this actually test what the scenario says?)
+  # 7. Key Design Decisions (architecture choices made)
+  # 8. Testing Commands (verification steps)
+  # 9. Specific Questions (targeted review questions)
   ```
 - [ ] **Include implementation context**: Add research findings, feasibility results, architecture decisions
 - [ ] **Document file changes**: Use `git diff --name-only main..HEAD` and `git diff --stat main..HEAD`
+- [ ] **⚠️ CRITICAL VALIDATION**: Specifically ask reviewer to verify that the implementation actually tests what the scenario describes (not a workaround)
 - [ ] **Share for review**: Provide prompt to another Claude instance or team member for validation
 - [ ] **Wait for review feedback**: Address any issues or questions raised
 - [ ] **Make any necessary changes**: Based on review feedback
@@ -438,12 +440,14 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   # 1. Real Databricks Integration (table creation, property verification)
   # 2. Test Table Design (TABLE_SPECS design, realistic test scenarios)
   # 3. Discovery Engine Integration (proper table discovery and property extraction)
-  # 4. Cleanup & Reliability (context managers, session fixtures, error handling)
-  # 5. Performance & Efficiency (test execution time, resource usage)
-  # 6. Integration Test Patterns (fixture usage, table mapping, discovery validation)
+  # 4. Scenario Logic Validation (CRITICAL: Do integration tests actually validate the scenario requirement?)
+  # 5. Cleanup & Reliability (context managers, session fixtures, error handling)
+  # 6. Performance & Efficiency (test execution time, resource usage)
+  # 7. Integration Test Patterns (fixture usage, table mapping, discovery validation)
   ```
 - [ ] **Document table specs created**: List test table specifications and expected outcomes
 - [ ] **Include integration test results**: Test counts, execution time, cleanup verification
+- [ ] **⚠️ CRITICAL VALIDATION**: Specifically ask reviewer to verify that integration tests actually validate the scenario requirement (not working around it)
 - [ ] **Share for review**: Focus on integration-specific concerns and Databricks behavior
 - [ ] **Wait for review feedback**: Address any integration-specific issues raised
 - [ ] **Make any necessary changes**: Based on review feedback
@@ -524,13 +528,15 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   # 2. BDD Step Definitions (Gherkin scenario implementation, step reusability)
   # 3. Production Data Validation (real compliance insights, business value)
   # 4. End-to-End Workflow (discovery → validation → reporting)
-  # 5. Business Requirements Fulfillment (scenario requirements met)
-  # 6. Maintainability & Documentation (code quality, future extensibility)
-  # 7. Performance & Scalability (production data handling, discovery limits)
+  # 5. Scenario Logic Validation (CRITICAL: Does the end-to-end flow actually test what the scenario describes?)
+  # 6. Business Requirements Fulfillment (scenario requirements met)
+  # 7. Maintainability & Documentation (code quality, future extensibility)
+  # 8. Performance & Scalability (production data handling, discovery limits)
   ```
 - [ ] **Document BDD implementation**: Step definitions added/reused, feature file integration
 - [ ] **Include production insights**: Real compliance findings, data patterns discovered
 - [ ] **Final architecture assessment**: Overall implementation quality and maintainability
+- [ ] **⚠️ CRITICAL VALIDATION**: Specifically ask reviewer to verify that the end-to-end implementation actually tests what the scenario describes
 - [ ] **Share for comprehensive review**: Full scenario implementation validation
 - [ ] **Wait for review feedback**: Address any end-to-end issues raised
 - [ ] **Make any necessary changes**: Based on comprehensive review feedback
