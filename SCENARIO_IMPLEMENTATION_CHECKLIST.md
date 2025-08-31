@@ -168,18 +168,11 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
   ```
   Follow the template completely - it covers SDK research, constraint testing, edge cases
 
-- [ ] **Infrastructure Discovery** (CRITICAL - can save days of work):
-  - [ ] **Check for existing domain infrastructure**: Does clustering/, documentation/, etc. already exist?
-  - [ ] **Find related scenarios**: Search for similar scenarios in feature files and tests
-  - [ ] **Identify configuration domain**: domain-specific config file vs. extending existing config
-  - [ ] **Assess validator architecture**: Which validator class to extend vs. create new
-  
-- [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
-
-- [ ] **DECISION GATE**: Is scenario feasible? 
-  - **Decision**: ✅ Feasible / ❌ Not Feasible
-  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
-  - **Reasoning**: [If not feasible, document why and STOP here]
+- [ ] **Complete Infrastructure Discovery & Decision Gate**:
+  - All infrastructure discovery questions answered in feasibility check
+  - All Databricks constraints reviewed 
+  - Decision Gate passed with clear infrastructure approach
+  - **Reference**: See reorganized `research/FEASIBILITY_CHECK_TEMPLATE.md`
 
 ### ⚙️ Configuration Value Extraction
 - [ ] **Identify business rule values**: Extract validation criteria that define pass/fail conditions

@@ -20,14 +20,20 @@
 
 **Research artifacts**: See `research/clustering/small_tables_auto_exemption/`
 
-### Layer 1: Unit Tests ([Date])
-- [ ] **Validator methods implemented**: List key methods added to DocumentationValidator
-- [ ] **Unit tests created**: Number of tests and coverage areas
-- [ ] **Makefile integration**: Added scenario to SCENARIOS list and unit test mapping
-- [ ] **Quality checks**: All tests pass, code quality validated
+### Layer 1: Unit Tests (2025-01-31)
+- [x] **Validator methods implemented**: 
+  - get_table_size_bytes() - SQL-based size detection via DESCRIBE DETAIL
+  - is_small_table() - threshold-based size checking (1GB/1MB for test tables)  
+  - Extended is_exempt_from_clustering_requirements() - combined manual + size exemption
+  - Updated should_enforce_clustering_requirements() - inverse of exemption logic
+- [x] **Unit tests created**: 25 comprehensive tests covering all scenarios
+  - Size thresholds, test table thresholds, manual exclusion precedence
+  - Configuration disable, edge cases, parametrized testing
+- [x] **Makefile integration**: Added small-tables-auto-exemption to SCENARIOS list and unit test mapping
+- [x] **Quality checks**: All tests pass (25/25), all linting and mypy checks pass
 - [ ] **🔄 PHILOSOPHY CHECK COMPLETED**: Added Layer 1 entry to IMPLEMENTATION_JOURNAL.md with learnings and recommendations
 
-**Validation**: `make test-scenario SCENARIO=[scenario-name] LAYER=unit` → X tests pass
+**Validation**: `make test-scenario SCENARIO=small-tables-auto-exemption LAYER=unit` → 25 tests pass
 
 ### Layer 2: Integration Tests ([Date])
 - [ ] **Test table specifications**: Added to table factory for scenario testing

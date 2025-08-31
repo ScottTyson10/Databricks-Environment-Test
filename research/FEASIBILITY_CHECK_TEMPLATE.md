@@ -29,14 +29,8 @@ Example: If you're testing "comments must be 10+ characters" but Databricks won'
 - Creating unnecessary complexity
 - Violating the research-first principle
 
-#### Questions to Research:
-- [ ] **API Methods**: What SDK methods/properties are available for this scenario?
-- [ ] **Data Structures**: What classes (TableInfo, etc.) contain relevant information?
-- [ ] **Property Names**: What are the exact property/attribute names to check?
-- [ ] **Data Types**: What data types are returned (string, list, boolean, etc.)?
-- [ ] **SDK Version Requirements**: Are there minimum SDK version requirements?
-
-#### 🔍 **NEW: Architecture & Infrastructure Research**
+#### 🔍 **STEP 1A: Architecture & Infrastructure Discovery** (CRITICAL - can save days of work)
+This step MUST be done first to avoid rebuilding existing infrastructure!
 - [ ] **Existing Infrastructure Check**: Does this scenario belong to an existing domain (clustering, documentation, etc.)?
   - Search for related validators: `find tests/ -name "*validator*.py" -exec grep -l "domain_keyword" {} \;`
   - Check for domain-specific config files: `ls tests/config/*_config.yaml`
@@ -48,6 +42,24 @@ Example: If you're testing "comments must be 10+ characters" but Databricks won'
 - [ ] **Validator Class**: Which validator should be extended/used?
   - Document existing validators and their purposes
   - Determine if new validator needed or existing one can be extended
+
+#### 🚨 **CRITICAL DECISION GATE** 🚨
+- [ ] **Review known constraints**: Check `research/DATABRICKS_ENFORCEMENT_BEHAVIORS.md`
+- [ ] **Infrastructure Assessment**: 
+  - **Decision**: ✅ Feasible / ❌ Not Feasible
+  - **Infrastructure Status**: ✅ Reusing Existing / 🔨 Building New / 🔄 Extending Existing  
+  - **Reasoning**: [If not feasible, document why and STOP here]
+
+⛔ **MANDATORY CHECKPOINT**: Only proceed if scenario is feasible and infrastructure approach is clear!
+
+#### 🔍 **STEP 1B: Databricks SDK & API Research**
+
+#### API & SDK Questions to Research:
+- [ ] **API Methods**: What SDK methods/properties are available for this scenario?
+- [ ] **Data Structures**: What classes (TableInfo, etc.) contain relevant information?
+- [ ] **Property Names**: What are the exact property/attribute names to check?
+- [ ] **Data Types**: What data types are returned (string, list, boolean, etc.)?
+- [ ] **SDK Version Requirements**: Are there minimum SDK version requirements?
 
 #### Research Sources (Complete BEFORE any coding):
 - [ ] **Official Databricks SDK Python documentation** - Primary source
