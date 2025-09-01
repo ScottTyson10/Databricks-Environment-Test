@@ -115,7 +115,7 @@ CREATE_TEST_TABLES=true  # Only for integration tests
 
 9. **Layer validation** - After completing each layer, validate using `make test-scenario SCENARIO=[name] LAYER=[unit|integration|production]`. Update the Makefile SCENARIOS list and unit test mapping when adding new scenarios.
 
-10. **Scenario implementation** - Use `SCENARIO_IMPLEMENTATION_CHECKLIST.md` as the single source of truth for implementing new scenarios. Create scenario journals using `research/SCENARIO_JOURNAL_TEMPLATE.md`.
+10. **Scenario implementation** - Use `SCENARIO_IMPLEMENTATION_CHECKLIST.md` as the single source of truth for implementing new scenarios. Create scenario implementation trackers using `research/SCENARIO_IMPLEMENTATION_TRACKER.md`.
 
 ## Scenario Implementation Workflow
 

@@ -429,7 +429,9 @@ class ClusteringValidator:
             return False
 
         # Use test threshold for integration testing, production threshold otherwise
-        threshold = self.test_size_threshold_bytes if table.is_test_table else self.size_threshold_bytes
+        # Determine if this is a test table by checking if it's in pytest_test_data schema
+        is_test_table = table.schema == "pytest_test_data"
+        threshold = self.test_size_threshold_bytes if is_test_table else self.size_threshold_bytes
 
         return table_size < threshold
 

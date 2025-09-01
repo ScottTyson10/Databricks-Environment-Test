@@ -77,13 +77,13 @@ Examples:
 ## Instructions for Use
 
 1. **Copy this template** for each new scenario (e.g., `PLACEHOLDER_DETECTION_IMPLEMENTATION.md`)
-2. **Create scenario journal** from `research/SCENARIO_JOURNAL_TEMPLATE.md`
+2. **Create scenario implementation tracker** from `research/SCENARIO_IMPLEMENTATION_TRACKER.md`
 3. **Fill in scenario-specific details** in the "Scenario Information" section
 4. **Start with Phase 0** - Create feature branch before any implementation work
 5. **Work through each phase systematically** - Don't skip phases or checklist items
 6. **Check off items** as you complete them and document findings in provided spaces
 7. **Use this as your single source of truth** during implementation
-8. **Update both checklist and journal** after each phase
+8. **Update both checklist and implementation tracker** after each phase
 9. **Commit your progress** at the end of each phase to track implementation status
 10. **Complete with Phase 6** - Merge to main and archive documents
 
@@ -138,7 +138,7 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 ### 📂 Document Setup
 - [ ] **Create research directory**: `mkdir -p research/documentation/[scenario_name]`
 - [ ] **Copy this checklist**: `cp SCENARIO_IMPLEMENTATION_CHECKLIST.md research/documentation/[scenario_name]/[SCENARIO_NAME]_IMPLEMENTATION.md`
-- [ ] **Create scenario journal**: `cp research/SCENARIO_JOURNAL_TEMPLATE.md research/documentation/[scenario_name]/[SCENARIO_NAME]_JOURNAL.md`
+- [ ] **Create scenario implementation tracker**: `cp research/SCENARIO_IMPLEMENTATION_TRACKER.md research/documentation/[scenario_name]/[SCENARIO_NAME]_IMPLEMENTATION_TRACKER.md`
 - [ ] **Fill in initial details**: Update scenario name, dates, and description in both documents
 
 ### 📊 Phase 0 Checklist Update  

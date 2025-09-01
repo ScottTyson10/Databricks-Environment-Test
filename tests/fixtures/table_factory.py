@@ -402,6 +402,226 @@ class TestTableFactory:
         logger.info(f"Successfully created test table with properties: {full_name}")
         return full_name
 
+    def _insert_test_data_for_size_testing(self, table_name: str, target_size: str) -> None:
+        """Insert test data to achieve target table sizes for size exemption testing.
+        
+        Args:
+            table_name: Full table name (catalog.schema.table)
+            target_size: Target size category ('small', 'large', 'boundary')
+        """
+        warehouse_id = os.getenv("DATABRICKS_WAREHOUSE_ID")
+        if not warehouse_id:
+            logger.warning("DATABRICKS_WAREHOUSE_ID not set, skipping data insertion")
+            return
+            
+        # Get the table schema to understand column structure
+        try:
+            describe_result = self.client.statement_execution.execute_statement(
+                statement=f"DESCRIBE {table_name}", 
+                warehouse_id=warehouse_id, 
+                wait_timeout="30s"
+            )
+            
+            columns_info = []
+            if (describe_result.result and describe_result.result.data_array and 
+                describe_result.manifest and describe_result.manifest.schema and describe_result.manifest.schema.columns):
+                
+                # Get column names and types from DESCRIBE output
+                for row in describe_result.result.data_array:
+                    col_name = row[0]  # Column name is first column
+                    col_type = row[1]  # Column type is second column
+                    if col_name and not col_name.startswith('#'):  # Skip partition info
+                        columns_info.append((col_name, col_type))
+            
+            logger.info(f"Table {table_name} has columns: {columns_info}")
+            
+        except Exception as e:
+            logger.warning(f"Could not describe table {table_name}: {e}")
+            # Fall back to assume standard (id, data) structure
+            columns_info = [('id', 'BIGINT'), ('data', 'STRING')]
+            
+        # Build appropriate INSERT statement based on table column structure
+        if target_size == "large":
+            row_count = 12000
+            if len(columns_info) >= 2:
+                col1_name, col1_type = columns_info[0]
+                col2_name, col2_type = columns_info[1]
+                
+                # Build SELECT clause based on column types
+                select_parts = [
+                    "id"  # First column is always ID
+                ]
+                
+                # Second column - adapt to its type
+                if 'STRING' in col2_type.upper():
+                    select_parts.append(f"""
+                        CONCAT(
+                            UUID(),  -- 36 chars unique
+                            '_row_', CAST(id AS STRING), '_',
+                            UUID(),  -- Another 36 chars unique
+                            '_data_',
+                            REPEAT(SUBSTR(UUID(), 1, 8), 30),  -- 240 chars of varied UUIDs
+                            '_end_', CAST(id * 17 AS STRING)  -- Varied multiplier
+                        ) as {col2_name}
+                    """)
+                elif 'DOUBLE' in col2_type.upper() or 'FLOAT' in col2_type.upper():
+                    select_parts.append(f"CAST(id * 1.5 AS DOUBLE) as {col2_name}")
+                elif 'INT' in col2_type.upper():
+                    select_parts.append(f"CAST(id * 2 AS BIGINT) as {col2_name}")
+                else:
+                    # Default to string representation
+                    select_parts.append(f"CAST(id AS STRING) as {col2_name}")
+                
+                # Handle additional columns if present (e.g., clustering columns)
+                for i in range(2, len(columns_info)):
+                    col_name, col_type = columns_info[i]
+                    if 'STRING' in col_type.upper():
+                        select_parts.append(f"CONCAT('col{i}_', CAST(id % 100 AS STRING)) as {col_name}")
+                    elif 'DOUBLE' in col_type.upper() or 'FLOAT' in col_type.upper():
+                        select_parts.append(f"CAST((id % 1000) / 10.0 AS DOUBLE) as {col_name}")
+                    elif 'INT' in col_type.upper():
+                        select_parts.append(f"CAST(id % 1000 AS BIGINT) as {col_name}")
+                    elif 'TIMESTAMP' in col_type.upper():
+                        select_parts.append(f"CURRENT_TIMESTAMP() as {col_name}")
+                    else:
+                        select_parts.append(f"CAST(id AS STRING) as {col_name}")
+                
+                sql = f"""
+                    INSERT INTO {table_name} 
+                    SELECT 
+                        {','.join(select_parts)}
+                    FROM (SELECT explode(sequence(1, {row_count})) as id)
+                """
+            else:
+                logger.warning(f"Could not determine column structure for {table_name}")
+                return
+            
+        elif target_size == "boundary":
+            # Insert data close to 1MB boundary (~900KB)
+            row_count = 1000
+            if len(columns_info) >= 2:
+                col1_name, col1_type = columns_info[0]
+                col2_name, col2_type = columns_info[1]
+                
+                select_parts = ["id"]
+                
+                if 'STRING' in col2_type.upper():
+                    select_parts.append(f"CONCAT(REPEAT('b', 900), CAST(id AS STRING)) as {col2_name}")
+                elif 'DOUBLE' in col2_type.upper() or 'FLOAT' in col2_type.upper():
+                    select_parts.append(f"CAST(id * 1.1 AS DOUBLE) as {col2_name}")
+                elif 'INT' in col2_type.upper():
+                    select_parts.append(f"CAST(id AS BIGINT) as {col2_name}")
+                else:
+                    select_parts.append(f"CAST(id AS STRING) as {col2_name}")
+                
+                # Handle additional columns
+                for i in range(2, len(columns_info)):
+                    col_name, col_type = columns_info[i]
+                    if 'STRING' in col_type.upper():
+                        select_parts.append(f"CONCAT('boundary_col{i}_', CAST(id % 50 AS STRING)) as {col_name}")
+                    elif 'DOUBLE' in col_type.upper() or 'FLOAT' in col_type.upper():
+                        select_parts.append(f"CAST((id % 100) / 5.0 AS DOUBLE) as {col_name}")
+                    elif 'INT' in col_type.upper():
+                        select_parts.append(f"CAST(id % 100 AS BIGINT) as {col_name}")
+                    elif 'TIMESTAMP' in col_type.upper():
+                        select_parts.append(f"CURRENT_TIMESTAMP() as {col_name}")
+                    else:
+                        select_parts.append(f"CAST(id AS STRING) as {col_name}")
+                
+                sql = f"""
+                    INSERT INTO {table_name}
+                    SELECT 
+                        {','.join(select_parts)}
+                    FROM (SELECT explode(sequence(1, {row_count})) as id)
+                """
+            else:
+                logger.warning(f"Could not determine column structure for {table_name}")
+                return
+            
+        else:  # target_size == "small" 
+            # Insert minimal data to keep under threshold
+            if len(columns_info) >= 2:
+                col1_name, col1_type = columns_info[0]
+                col2_name, col2_type = columns_info[1]
+                
+                # Create appropriate values for each column type
+                values_rows = []
+                for i in range(1, 4):  # Insert 3 small rows
+                    row_values = [str(i)]  # ID column
+                    
+                    # Second column value based on type
+                    if 'STRING' in col2_type.upper():
+                        row_values.append(f"'small_test_data_{i}'")
+                    elif 'DOUBLE' in col2_type.upper() or 'FLOAT' in col2_type.upper():
+                        row_values.append(f"{i * 1.5}")
+                    elif 'INT' in col2_type.upper():
+                        row_values.append(str(i * 10))
+                    else:
+                        row_values.append(f"'value_{i}'")
+                    
+                    # Additional columns
+                    for j in range(2, len(columns_info)):
+                        col_name, col_type = columns_info[j]
+                        if 'STRING' in col_type.upper():
+                            row_values.append(f"'col{j}_{i}'")
+                        elif 'DOUBLE' in col_type.upper() or 'FLOAT' in col_type.upper():
+                            row_values.append(f"{i * 0.5}")
+                        elif 'INT' in col_type.upper():
+                            row_values.append(str(i))
+                        elif 'TIMESTAMP' in col_type.upper():
+                            row_values.append("CURRENT_TIMESTAMP()")
+                        else:
+                            row_values.append(f"'val_{i}'")
+                    
+                    values_rows.append(f"({', '.join(row_values)})")
+                
+                sql = f"""
+                    INSERT INTO {table_name}
+                    VALUES {', '.join(values_rows)}
+                """
+            else:
+                logger.warning(f"Could not determine column structure for {table_name}")
+                return
+            
+        try:
+            result = self.client.statement_execution.execute_statement(statement=sql, warehouse_id=warehouse_id)
+            logger.info(f"Inserted test data for {target_size} size scenario: {table_name}")
+            
+            # Check if there was an error in the result
+            if result.status and hasattr(result.status, 'error') and result.status.error:
+                logger.error(f"Insert failed for {table_name}: {result.status.error}")
+            
+            # For large tables, wait a moment and verify the size was updated
+            if target_size == "large":
+                import time
+                time.sleep(2)  # Give Delta Lake time to update table metadata
+                
+                # Verify the table is actually large
+                try:
+                    size_result = self.client.statement_execution.execute_statement(
+                        statement=f"DESCRIBE DETAIL {table_name}", 
+                        warehouse_id=warehouse_id, 
+                        wait_timeout="30s"
+                    )
+                    
+                    if (size_result.result and size_result.result.data_array and 
+                        size_result.manifest and size_result.manifest.schema and size_result.manifest.schema.columns):
+                        columns = [col.name for col in size_result.manifest.schema.columns]
+                        row_data = size_result.result.data_array[0]
+                        detail_dict = dict(zip(columns, row_data))
+                        size_in_bytes = detail_dict.get("sizeInBytes")
+                        
+                        if isinstance(size_in_bytes, (int, str)):
+                            actual_size = int(size_in_bytes)
+                            size_mb = actual_size / (1024 * 1024)
+                            logger.info(f"Verified large table {table_name}: {actual_size} bytes ({size_mb:.2f} MB)")
+                except Exception as verify_e:
+                    logger.warning(f"Could not verify size for large table {table_name}: {verify_e}")
+                    
+        except Exception as e:
+            logger.warning(f"Failed to insert test data for {table_name}: {e}")
+            # Continue anyway - some tests can work with empty tables
+
 
 # Context manager convenience functions for each scenario
 @contextmanager
@@ -633,4 +853,53 @@ def create_test_tables_for_cluster_exclusion_scenario(client: WorkspaceClient) -
             table_name = factory.create_table_with_properties(spec)
             created_tables[spec_name] = table_name
         logger.info(f"Created {len(created_tables)} test tables for cluster_exclusion scenario")
+        yield created_tables
+
+
+@contextmanager
+def create_test_tables_for_size_exemption_scenario(client: WorkspaceClient) -> Iterator[dict[str, str]]:
+    """Context manager providing test tables for size-based clustering exemption scenario.
+    
+    Creates test tables with various sizes and configurations to test automatic
+    size-based exemption logic. Ensures proper cleanup after tests complete.
+    
+    Args:
+        client: Databricks workspace client
+        
+    Yields:
+        Dictionary mapping test case names to fully qualified table names
+        
+    Example:
+        >>> with create_test_tables_for_size_exemption_scenario(client) as tables:
+        ...     small_table = tables["small_exempt_table"] 
+        ...     # Run size exemption tests
+    """
+    from tests.fixtures.clustering.size_exemption_specs import TABLE_SPECS_SIZE_EXEMPTION
+    
+    with TestTableFactory(client) as factory:
+        created_tables = {}
+        for spec_name, spec in TABLE_SPECS_SIZE_EXEMPTION.items():
+            # Create table based on spec type
+            if hasattr(spec, 'clustering_columns') and spec.clustering_columns:
+                # Table with clustering columns
+                table_name = factory.create_table_with_clustering(spec)
+            else:
+                # Regular table with properties
+                table_name = factory.create_table_with_properties(spec)
+            
+            # Add different amounts of data based on table purpose
+            if "large" in spec_name:
+                # Insert enough data to exceed test threshold (1MB)
+                factory._insert_test_data_for_size_testing(table_name, target_size="large")
+            elif "boundary" in spec_name:
+                # Insert data close to threshold boundary
+                factory._insert_test_data_for_size_testing(table_name, target_size="boundary") 
+            elif "empty" not in spec_name:
+                # Insert minimal data for small tables (not empty)
+                factory._insert_test_data_for_size_testing(table_name, target_size="small")
+            # empty tables get no data inserted
+            
+            created_tables[spec_name] = table_name
+            
+        logger.info(f"Created {len(created_tables)} test tables for size_exemption scenario")
         yield created_tables
