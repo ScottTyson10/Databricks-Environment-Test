@@ -423,6 +423,7 @@ class TestTableFactory:
             )
             
             columns_info = []
+            seen_columns = set()  # Track seen column names to avoid duplicates
             if (describe_result.result and describe_result.result.data_array and 
                 describe_result.manifest and describe_result.manifest.schema and describe_result.manifest.schema.columns):
                 
@@ -430,8 +431,9 @@ class TestTableFactory:
                 for row in describe_result.result.data_array:
                     col_name = row[0]  # Column name is first column
                     col_type = row[1]  # Column type is second column
-                    if col_name and not col_name.startswith('#'):  # Skip partition info
+                    if col_name and not col_name.startswith('#') and col_name not in seen_columns:  # Skip partition info and duplicates
                         columns_info.append((col_name, col_type))
+                        seen_columns.add(col_name)
             
             logger.info(f"Table {table_name} has columns: {columns_info}")
             
