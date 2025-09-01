@@ -14,6 +14,9 @@ from dataclasses import dataclass
 
 from databricks.sdk import WorkspaceClient
 
+# Configuration: Allow disabling duplicate filtering workaround
+ENABLE_DUPLICATE_COLUMN_FILTERING = os.getenv("ENABLE_DUPLICATE_COLUMN_FILTERING", "true").lower() == "true"
+
 logger = logging.getLogger(__name__)
 
 
@@ -416,24 +419,96 @@ class TestTableFactory:
             
         # Get the table schema to understand column structure
         try:
+            # Try primary method: DESCRIBE TABLE
             describe_result = self.client.statement_execution.execute_statement(
                 statement=f"DESCRIBE {table_name}", 
                 warehouse_id=warehouse_id, 
                 wait_timeout="30s"
             )
             
+            # For investigation: also try alternative schema detection methods
+            alternative_methods_successful = False
+            try:
+                # Alternative method 1: SHOW COLUMNS
+                show_result = self.client.statement_execution.execute_statement(
+                    statement=f"SHOW COLUMNS IN {table_name}",
+                    warehouse_id=warehouse_id,
+                    wait_timeout="30s"
+                )
+                logger.debug(f"SHOW COLUMNS result: {show_result.result.data_array if show_result.result else 'No data'}")
+                alternative_methods_successful = True
+            except Exception as show_e:
+                logger.debug(f"SHOW COLUMNS failed for {table_name}: {show_e}")
+            
+            try:
+                # Alternative method 2: Information Schema (if available)
+                table_parts = table_name.split('.')
+                if len(table_parts) == 3:
+                    catalog, schema, table = table_parts
+                    info_result = self.client.statement_execution.execute_statement(
+                        statement=f"SELECT column_name, data_type FROM information_schema.columns WHERE table_catalog = '{catalog}' AND table_schema = '{schema}' AND table_name = '{table}' ORDER BY ordinal_position",
+                        warehouse_id=warehouse_id,
+                        wait_timeout="30s"
+                    )
+                    logger.debug(f"Information schema result: {info_result.result.data_array if info_result.result else 'No data'}")
+                    alternative_methods_successful = True
+            except Exception as info_e:
+                logger.debug(f"Information schema query failed for {table_name}: {info_e}")
+                
+            if not alternative_methods_successful:
+                logger.debug(f"All alternative schema detection methods failed for {table_name}")
+            
             columns_info = []
-            seen_columns = set()  # Track seen column names to avoid duplicates
             if (describe_result.result and describe_result.result.data_array and 
                 describe_result.manifest and describe_result.manifest.schema and describe_result.manifest.schema.columns):
                 
+                # Log raw DESCRIBE output for investigation
+                logger.debug(f"Raw DESCRIBE output for {table_name}:")
+                logger.debug(f"  Data array: {describe_result.result.data_array}")
+                logger.debug(f"  Schema columns: {[col.name for col in describe_result.manifest.schema.columns]}")
+                
+                # Track duplicates for investigation
+                seen_columns = set()
+                duplicate_count = 0
+                
                 # Get column names and types from DESCRIBE output
-                for row in describe_result.result.data_array:
+                for i, row in enumerate(describe_result.result.data_array):
                     col_name = row[0]  # Column name is first column
                     col_type = row[1]  # Column type is second column
-                    if col_name and not col_name.startswith('#') and col_name not in seen_columns:  # Skip partition info and duplicates
-                        columns_info.append((col_name, col_type))
-                        seen_columns.add(col_name)
+                    
+                    if col_name and not col_name.startswith('#'):  # Skip partition info
+                        if col_name in seen_columns:
+                            # Found duplicate - investigate!
+                            duplicate_count += 1
+                            existing_type = next((ct for cn, ct in columns_info if cn == col_name), None)
+                            
+                            if existing_type and existing_type != col_type:
+                                # CRITICAL: Type mismatch between duplicates
+                                logger.error(f"CRITICAL: Column {col_name} type mismatch - existing: {existing_type}, duplicate: {col_type}")
+                                logger.error(f"This indicates a serious schema inconsistency that could cause data corruption")
+                                if not ENABLE_DUPLICATE_COLUMN_FILTERING:
+                                    raise ValueError(f"Schema inconsistency detected for column {col_name}: {existing_type} vs {col_type}")
+                                else:
+                                    logger.error("Continuing due to ENABLE_DUPLICATE_COLUMN_FILTERING=true, but this is dangerous")
+                            else:
+                                # Same type duplicate - likely Databricks clustering artifact
+                                logger.warning(f"Duplicate column detected: {col_name} (type: {col_type}) at DESCRIBE row {i}")
+                                if duplicate_count == 1:  # Log context only once per table
+                                    logger.warning("This commonly occurs with clustered tables - clustering columns may appear twice in DESCRIBE output")
+                                    logger.warning("Root cause investigation needed: Is this expected Databricks behavior or API bug?")
+                                
+                                if not ENABLE_DUPLICATE_COLUMN_FILTERING:
+                                    logger.error("ENABLE_DUPLICATE_COLUMN_FILTERING=false - failing on duplicate")
+                                    raise ValueError(f"Duplicate column {col_name} detected and filtering disabled")
+                                else:
+                                    logger.debug(f"Filtering duplicate {col_name} due to ENABLE_DUPLICATE_COLUMN_FILTERING=true")
+                        else:
+                            columns_info.append((col_name, col_type))
+                            seen_columns.add(col_name)
+                
+                if duplicate_count > 0:
+                    logger.warning(f"Table {table_name} had {duplicate_count} duplicate columns in DESCRIBE output")
+                    logger.warning("Consider investigating if this is a Databricks clustering-related API behavior")
             
             logger.info(f"Table {table_name} has columns: {columns_info}")
             
