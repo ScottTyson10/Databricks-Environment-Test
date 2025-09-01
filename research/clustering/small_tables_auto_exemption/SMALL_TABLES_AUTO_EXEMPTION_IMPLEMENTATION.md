@@ -83,7 +83,7 @@ Examples:
 5. **Work through each phase systematically** - Don't skip phases or checklist items
 6. **Check off items** as you complete them and document findings in provided spaces
 7. **Use this as your single source of truth** during implementation
-8. **Update both checklist and implementation tracker** after each phase
+8. **Update both checklist and implementation tracker** after each step completion
 9. **Commit your progress** at the end of each phase to track implementation status
 10. **Complete with Phase 6** - Merge to main and archive documents
 

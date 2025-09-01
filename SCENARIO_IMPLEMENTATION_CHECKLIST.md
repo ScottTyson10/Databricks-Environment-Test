@@ -83,7 +83,7 @@ Examples:
 5. **Work through each phase systematically** - Don't skip phases or checklist items
 6. **Check off items** as you complete them and document findings in provided spaces
 7. **Use this as your single source of truth** during implementation
-8. **Update both checklist and implementation tracker** after each phase
+8. **Update both checklist and implementation tracker** after each step completion
 9. **Commit your progress** at the end of each phase to track implementation status
 10. **Complete with Phase 6** - Merge to main and archive documents
 
@@ -709,9 +709,30 @@ Each phase includes a **MANDATORY CODE REVIEW PROMPT GENERATION** step that is f
 
 ## Code Review Prompt Template
 
+### Critical Review Instructions for Reviewer
+**CRITICAL REVIEWER ROLE**: You are conducting a critical code review. Your job is to find bugs, security issues, and logic flaws that could cause production failures. Be skeptical of test results and dig into any error messages or warnings. I need you to be thorough and critical, not polite.
+
+**ISSUE REPORTING**: If you find any issues, provide:
+1. **Exact location**: File path and line number(s)
+2. **How to replicate**: Specific steps, commands, or conditions that trigger the issue
+3. **Expected vs actual behavior**: What should happen vs what actually happens
+4. **Code example**: Show the problematic code snippet
+5. **Suggested fix**: Specific code changes or approach to resolve the issue
+6. **Impact assessment**: Potential consequences if the issue reaches production
+
 ### Basic Prompt Structure
 ```markdown
 **CODE REVIEW REQUEST: [Scenario Name] Implementation**
+
+**REVIEWER INSTRUCTIONS**: You are conducting a critical code review. Your job is to find bugs, security issues, and logic flaws that could cause production failures. Be skeptical of test results and dig into any error messages or warnings. I need you to be thorough and critical, not polite.
+
+**ISSUE REPORTING**: If you find any issues, provide:
+1. **Exact location**: File path and line number(s)
+2. **How to replicate**: Specific steps, commands, or conditions that trigger the issue
+3. **Expected vs actual behavior**: What should happen vs what actually happens
+4. **Code example**: Show the problematic code snippet
+5. **Suggested fix**: Specific code changes or approach to resolve the issue
+6. **Impact assessment**: Potential consequences if the issue reaches production
 
 ## Context & Requirements
 [Scenario description, key requirements, business logic]

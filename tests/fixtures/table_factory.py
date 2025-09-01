@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 
 from databricks.sdk import WorkspaceClient
+from tests.utils.schema_detector import SchemaDetector, SchemaDetectionError
 
 logger = logging.getLogger(__name__)
 
@@ -402,6 +403,16 @@ class TestTableFactory:
         logger.info(f"Successfully created test table with properties: {full_name}")
         return full_name
 
+    def _get_table_schema(self, table_name: str) -> list[tuple[str, str]]:
+        """Get table schema using research-based schema detection.
+        
+        Uses dedicated SchemaDetector class with proper method priority and error handling.
+        See: tests/utils/schema_detector.py and research documentation.
+        """
+        warehouse_id = os.getenv("DATABRICKS_WAREHOUSE_ID")
+        detector = SchemaDetector(self.client, warehouse_id)
+        return detector.get_table_schema(table_name)
+
     def _insert_test_data_for_size_testing(self, table_name: str, target_size: str) -> None:
         """Insert test data to achieve target table sizes for size exemption testing.
         
@@ -414,78 +425,14 @@ class TestTableFactory:
             logger.warning("DATABRICKS_WAREHOUSE_ID not set, skipping data insertion")
             return
             
-        # Schema detection strategy: Use the right API for the job
-        # DESCRIBE TABLE includes clustering metadata causing duplicates 
-        # Information Schema is the most reliable approach when available
-        columns_info = []
-        
+        # Get table schema using research-based schema detection
         try:
-            # Primary method: Information Schema (standard SQL approach)
-            table_parts = table_name.split('.')
-            if len(table_parts) == 3:
-                catalog, schema, table = table_parts
-                info_result = self.client.statement_execution.execute_statement(
-                    statement=f"""
-                        SELECT column_name, data_type 
-                        FROM information_schema.columns 
-                        WHERE table_catalog = '{catalog}' 
-                          AND table_schema = '{schema}' 
-                          AND table_name = '{table}' 
-                        ORDER BY ordinal_position
-                    """,
-                    warehouse_id=warehouse_id,
-                    wait_timeout="30s"
-                )
-                
-                if (info_result.result and info_result.result.data_array):
-                    for row in info_result.result.data_array:
-                        col_name = row[0]
-                        col_type = row[1]
-                        if col_name:
-                            columns_info.append((col_name, col_type))
-                    
-                    logger.debug(f"Used information_schema for {table_name}: {len(columns_info)} columns")
-        
-        except Exception as info_e:
-            logger.debug(f"Information schema failed for {table_name}: {info_e}")
-        
-        # Fallback: DESCRIBE TABLE with intelligent duplicate handling
-        if not columns_info:
-            try:
-                describe_result = self.client.statement_execution.execute_statement(
-                    statement=f"DESCRIBE {table_name}", 
-                    warehouse_id=warehouse_id, 
-                    wait_timeout="30s"
-                )
-                
-                if (describe_result.result and describe_result.result.data_array):
-                    # Parse DESCRIBE output intelligently
-                    # Stop at clustering section (indicated by empty rows or clustering keywords)
-                    for row in describe_result.result.data_array:
-                        col_name = row[0] if len(row) > 0 else None
-                        col_type = row[1] if len(row) > 1 else None
-                        
-                        # Skip partition info and clustering metadata
-                        if not col_name or col_name.startswith('#'):
-                            break  # End of column definitions
-                        
-                        # Skip clustering section headers
-                        if col_name.lower() in ['clustering information', '# clustering information']:
-                            break
-                            
-                        columns_info.append((col_name, col_type))
-                    
-                    logger.debug(f"Used DESCRIBE TABLE for {table_name}: {len(columns_info)} columns")
-                        
-            except Exception as desc_e:
-                logger.warning(f"DESCRIBE TABLE failed for {table_name}: {desc_e}")
-        
-        if not columns_info:
-            logger.warning(f"Could not determine schema for {table_name}, using fallback")
-            # Fall back to assume standard structure
+            columns_info = self._get_table_schema(table_name)
+            logger.info(f"Table {table_name} has columns: {columns_info}")
+        except SchemaDetectionError as e:
+            logger.warning(f"Schema detection failed for {table_name}: {e}")
+            logger.warning("Using fallback schema assumption")
             columns_info = [('id', 'BIGINT'), ('data', 'STRING')]
-        
-        logger.info(f"Table {table_name} has columns: {columns_info}")
             
         # Build appropriate INSERT statement based on table column structure
         if target_size == "large":
