@@ -22,7 +22,7 @@ class TestSchemaDetector:
     @pytest.fixture
     def detector(self, mock_client):
         """SchemaDetector instance with mocked client."""
-        return SchemaDetector(mock_client, warehouse_id="test-warehouse")
+        return SchemaDetector(mock_client)
     
     def test_native_sdk_success(self, detector, mock_client):
         """Test successful schema detection via native SDK."""
@@ -45,109 +45,20 @@ class TestSchemaDetector:
         mock_table_info.columns = None
         mock_client.tables.get.return_value = mock_table_info
         
-        # Should fall back to Information Schema
-        mock_result = Mock()
-        mock_result.result.data_array = [["id", "LONG"], ["data", "STRING"]]
-        mock_client.statement_execution.execute_statement.return_value = mock_result
+        with pytest.raises(SchemaDetectionError) as exc_info:
+            detector.get_table_schema("workspace.test.table")
         
-        result = detector.get_table_schema("workspace.test.table")
-        
-        assert result == [("id", "LONG"), ("data", "STRING")]
+        assert "has no columns metadata" in str(exc_info.value)
     
-    def test_information_schema_success(self, detector, mock_client):
-        """Test successful fallback to Information Schema."""
-        # Make native SDK fail
-        mock_client.tables.get.side_effect = Exception("SDK failed")
-        
-        # Setup Information Schema success
-        mock_result = Mock()
-        mock_result.result = Mock()
-        mock_result.result.data_array = [["id", "BIGINT"], ["name", "STRING"]]
-        mock_client.statement_execution.execute_statement.return_value = mock_result
-        
-        result = detector.get_table_schema("workspace.test.table")
-        
-        assert result == [("id", "BIGINT"), ("name", "STRING")]
-        
-        # Verify SQL query
-        call_args = mock_client.statement_execution.execute_statement.call_args
-        assert "information_schema.columns" in call_args[1]["statement"]
-        assert "WHERE table_catalog = 'workspace'" in call_args[1]["statement"]
-    
-    def test_describe_table_success(self, detector, mock_client):
-        """Test successful fallback to DESCRIBE TABLE."""
-        # Make both native SDK and Information Schema fail
-        mock_client.tables.get.side_effect = Exception("SDK failed")
-        
-        # First call (Information Schema) fails, second call (DESCRIBE) succeeds
-        mock_result = Mock()
-        mock_result.result.data_array = [["id", "BIGINT"], ["data", "STRING"], ["# Partition Info", ""]]
-        
-        mock_client.statement_execution.execute_statement.side_effect = [
-            Exception("Info schema failed"),  # Information Schema fails
-            mock_result  # DESCRIBE TABLE succeeds
-        ]
-        
-        result = detector.get_table_schema("workspace.test.table")
-        
-        # Should stop at partition info and only return real columns
-        assert result == [("id", "BIGINT"), ("data", "STRING")]
-    
-    def test_describe_table_clustering_metadata_filtering(self, detector, mock_client):
-        """Test that DESCRIBE TABLE properly filters clustering metadata."""
-        mock_client.tables.get.side_effect = Exception("SDK failed")
-        
-        mock_result = Mock()
-        # Simulate DESCRIBE output with clustering metadata
-        mock_result.result.data_array = [
-            ["id", "BIGINT"],
-            ["category", "STRING"],
-            ["data", "STRING"],
-            ["Clustering Information", ""],  # Should stop here
-            ["category", "STRING"]  # Duplicate from clustering section
-        ]
-        
-        mock_client.statement_execution.execute_statement.side_effect = [
-            Exception("Info schema failed"),
-            mock_result
-        ]
-        
-        result = detector.get_table_schema("workspace.test.table")
-        
-        # Should not include duplicates or metadata
-        assert result == [("id", "BIGINT"), ("category", "STRING"), ("data", "STRING")]
-    
-    def test_all_methods_fail(self, detector, mock_client):
-        """Test SchemaDetectionError when all methods fail."""
-        # Make all methods fail
-        mock_client.tables.get.side_effect = Exception("SDK failed")
-        mock_client.statement_execution.execute_statement.side_effect = Exception("SQL failed")
+    def test_sdk_failure(self, detector, mock_client):
+        """Test SchemaDetectionError when SDK fails."""
+        mock_client.tables.get.side_effect = Exception("SDK connection failed")
         
         with pytest.raises(SchemaDetectionError) as exc_info:
             detector.get_table_schema("workspace.test.table")
         
         assert "Could not determine schema" in str(exc_info.value)
-    
-    def test_no_warehouse_id_fallback_limitation(self, mock_client):
-        """Test behavior when no warehouse_id is provided."""
-        detector = SchemaDetector(mock_client, warehouse_id=None)
-        mock_client.tables.get.side_effect = Exception("SDK failed")
-        
-        with pytest.raises(SchemaDetectionError):
-            detector.get_table_schema("workspace.test.table")
-        
-        # Should not attempt SQL methods without warehouse_id
-        mock_client.statement_execution.execute_statement.assert_not_called()
-    
-    def test_invalid_table_name_format(self, detector, mock_client):
-        """Test error handling for invalid table name format."""
-        mock_client.tables.get.side_effect = Exception("SDK failed")
-        
-        # Information Schema should fail on invalid table name format
-        mock_client.statement_execution.execute_statement.side_effect = ValueError("Invalid format")
-        
-        with pytest.raises(SchemaDetectionError):
-            detector.get_table_schema("invalid_table_name")
+        assert "SDK connection failed" in str(exc_info.value)
     
     @pytest.mark.parametrize("table_name", [
         "catalog.schema.table",
@@ -186,17 +97,12 @@ class TestSchemaDetector:
         assert result == expected
     
     def test_empty_columns_handling(self, detector, mock_client):
-        """Test handling of tables with empty column lists from various methods."""
-        mock_client.tables.get.side_effect = Exception("SDK failed")
+        """Test handling of tables with empty column lists."""
+        mock_table_info = Mock()
+        mock_table_info.columns = []
+        mock_client.tables.get.return_value = mock_table_info
         
-        # Information Schema returns empty result
-        mock_result = Mock()
-        mock_result.result.data_array = []
-        
-        mock_client.statement_execution.execute_statement.side_effect = [
-            mock_result,  # Empty Information Schema result
-            Exception("DESCRIBE failed")  # DESCRIBE also fails
-        ]
-        
-        with pytest.raises(SchemaDetectionError):
+        with pytest.raises(SchemaDetectionError) as exc_info:
             detector.get_table_schema("workspace.test.table")
+            
+        assert "has no columns metadata" in str(exc_info.value)

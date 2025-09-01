@@ -406,11 +406,10 @@ class TestTableFactory:
     def _get_table_schema(self, table_name: str) -> list[tuple[str, str]]:
         """Get table schema using research-based schema detection.
         
-        Uses dedicated SchemaDetector class with proper method priority and error handling.
+        Uses dedicated SchemaDetector class with native SDK approach.
         See: tests/utils/schema_detector.py and research documentation.
         """
-        warehouse_id = os.getenv("DATABRICKS_WAREHOUSE_ID")
-        detector = SchemaDetector(self.client, warehouse_id)
+        detector = SchemaDetector(self.client)
         return detector.get_table_schema(table_name)
 
     def _insert_test_data_for_size_testing(self, table_name: str, target_size: str) -> None:
