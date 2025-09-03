@@ -63,7 +63,7 @@ class TestSizeExemptionValidators:
         # Size under 1GB (1073741824 bytes)
         size_bytes = 500_000_000  # 500MB
 
-        result = validator.is_small_table(small_table, size_bytes=size_bytes)
+        result = validator.is_small_table(small_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is True
 
@@ -72,7 +72,7 @@ class TestSizeExemptionValidators:
         # Size over 1GB
         size_bytes = 2_000_000_000  # 2GB
 
-        result = validator.is_small_table(large_table, size_bytes=size_bytes)
+        result = validator.is_small_table(large_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is False
 
@@ -81,7 +81,7 @@ class TestSizeExemptionValidators:
         # Size exactly 1GB
         size_bytes = 1_073_741_824  # 1GB exactly
 
-        result = validator.is_small_table(large_table, size_bytes=size_bytes)
+        result = validator.is_small_table(large_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is False
 
@@ -90,7 +90,7 @@ class TestSizeExemptionValidators:
         # Size under test threshold (1MB = 1048576 bytes)
         size_bytes = 500_000  # 500KB
 
-        result = validator.is_small_table(test_table, size_bytes=size_bytes)
+        result = validator.is_small_table(test_table, validator.test_size_threshold_bytes, size_bytes)
 
         assert result is True
 
@@ -99,7 +99,7 @@ class TestSizeExemptionValidators:
         # Size over test threshold (1MB)
         size_bytes = 2_000_000  # 2MB
 
-        result = validator.is_small_table(test_table, size_bytes=size_bytes)
+        result = validator.is_small_table(test_table, validator.test_size_threshold_bytes, size_bytes)
 
         assert result is False
 
@@ -110,14 +110,14 @@ class TestSizeExemptionValidators:
 
         size_bytes = 500_000_000  # 500MB (normally small)
 
-        result = validator.is_small_table(small_table, size_bytes=size_bytes)
+        result = validator.is_small_table(small_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is False
 
     def test_is_small_table_no_size_data(self, validator, small_table):
         """Test behavior when size cannot be determined."""
         # No size_bytes provided and no warehouse_id
-        result = validator.is_small_table(small_table, size_bytes=None)
+        result = validator.is_small_table(small_table, validator.size_threshold_bytes, None)
 
         assert result is False
 
@@ -125,7 +125,9 @@ class TestSizeExemptionValidators:
         """Test that small tables are exempt from clustering requirements."""
         size_bytes = 500_000_000  # 500MB
 
-        result = validator.is_exempt_from_clustering_requirements(small_table, size_bytes=size_bytes)
+        result = validator.is_exempt_from_clustering_requirements(
+            small_table, validator.size_threshold_bytes, size_bytes
+        )
 
         assert result is True
 
@@ -133,7 +135,9 @@ class TestSizeExemptionValidators:
         """Test that large tables are NOT exempt from clustering requirements."""
         size_bytes = 2_000_000_000  # 2GB
 
-        result = validator.is_exempt_from_clustering_requirements(large_table, size_bytes=size_bytes)
+        result = validator.is_exempt_from_clustering_requirements(
+            large_table, validator.size_threshold_bytes, size_bytes
+        )
 
         assert result is False
 
@@ -141,7 +145,9 @@ class TestSizeExemptionValidators:
         """Test that manual cluster_exclusion flag overrides size check."""
         size_bytes = 2_000_000_000  # 2GB (large table)
 
-        result = validator.is_exempt_from_clustering_requirements(excluded_table, size_bytes=size_bytes)
+        result = validator.is_exempt_from_clustering_requirements(
+            excluded_table, validator.size_threshold_bytes, size_bytes
+        )
 
         # Should be exempt due to manual exclusion flag despite large size
         assert result is True
@@ -150,7 +156,9 @@ class TestSizeExemptionValidators:
         """Test exemption when both manual exclusion and small size are true."""
         size_bytes = 500_000_000  # 500MB (small)
 
-        result = validator.is_exempt_from_clustering_requirements(excluded_table, size_bytes=size_bytes)
+        result = validator.is_exempt_from_clustering_requirements(
+            excluded_table, validator.size_threshold_bytes, size_bytes
+        )
 
         assert result is True
 
@@ -158,7 +166,9 @@ class TestSizeExemptionValidators:
         """Test no exemption when table is large and has no exclusion flag."""
         size_bytes = 2_000_000_000  # 2GB
 
-        result = validator.is_exempt_from_clustering_requirements(large_table, size_bytes=size_bytes)
+        result = validator.is_exempt_from_clustering_requirements(
+            large_table, validator.size_threshold_bytes, size_bytes
+        )
 
         assert result is False
 
@@ -166,7 +176,9 @@ class TestSizeExemptionValidators:
         """Test that clustering should NOT be enforced for small tables."""
         size_bytes = 500_000_000  # 500MB
 
-        result = validator.should_enforce_clustering_requirements(small_table, size_bytes=size_bytes)
+        result = validator.should_enforce_clustering_requirements(
+            small_table, validator.size_threshold_bytes, size_bytes
+        )
 
         assert result is False  # Should NOT enforce for small tables
 
@@ -174,7 +186,9 @@ class TestSizeExemptionValidators:
         """Test that clustering SHOULD be enforced for large tables."""
         size_bytes = 2_000_000_000  # 2GB
 
-        result = validator.should_enforce_clustering_requirements(large_table, size_bytes=size_bytes)
+        result = validator.should_enforce_clustering_requirements(
+            large_table, validator.size_threshold_bytes, size_bytes
+        )
 
         assert result is True  # Should enforce for large tables
 
@@ -182,7 +196,7 @@ class TestSizeExemptionValidators:
         """Test handling of zero-size tables."""
         size_bytes = 0
 
-        result = validator.is_small_table(small_table, size_bytes=size_bytes)
+        result = validator.is_small_table(small_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is True  # Zero size is under threshold
 
@@ -191,7 +205,7 @@ class TestSizeExemptionValidators:
         size_bytes = -1
 
         # Negative size should still be "less than" threshold
-        result = validator.is_small_table(small_table, size_bytes=size_bytes)
+        result = validator.is_small_table(small_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is True
 
@@ -211,7 +225,7 @@ class TestSizeExemptionValidators:
         """Test various size thresholds with parameterized test."""
         size_bytes = size_mb * 1024 * 1024  # Convert MB to bytes
 
-        result = validator.is_small_table(small_table, size_bytes=size_bytes)
+        result = validator.is_small_table(small_table, validator.size_threshold_bytes, size_bytes)
 
         assert result is expected
 
@@ -221,9 +235,3 @@ class TestSizeExemptionValidators:
         assert validator.size_threshold_bytes == 1_073_741_824  # 1GB
         assert validator.test_size_threshold_bytes == 1_048_576  # 1MB
         assert validator.exempt_small_tables is True
-
-    def test_get_table_size_bytes_no_warehouse_id(self, validator, small_table):
-        """Test that get_table_size_bytes returns None without warehouse_id."""
-        result = validator.get_table_size_bytes(small_table, warehouse_id=None)
-
-        assert result is None

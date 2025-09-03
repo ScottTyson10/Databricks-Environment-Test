@@ -30,7 +30,7 @@ Feature: Databricks Clustering Compliance
     When I check cluster exclusion exemption flags
     Then tables with cluster_exclusion=true should be exempt from clustering requirements
 
-  @clustering  @exclusion
+  @clustering  @exclusion  @small_tables_auto_exemption
   Scenario: Small tables under 1GB can be exempted from clustering
     Given I discover all accessible tables with clustering filters
     When I check table sizes and clustering exemption eligibility

@@ -436,8 +436,12 @@ def check_cluster_exclusion_exemption_flags(clustering_context: ClusteringContex
         # Check cluster exclusion status
         has_cluster_exclusion = clustering_context.clustering_validator.has_cluster_exclusion(table)
         exclusion_status = clustering_context.clustering_validator.get_cluster_exclusion_status(table)
-        is_exempt = clustering_context.clustering_validator.is_exempt_from_clustering_requirements(table)
-        should_enforce = clustering_context.clustering_validator.should_enforce_clustering_requirements(table)
+        is_exempt = clustering_context.clustering_validator.is_exempt_from_clustering_requirements(
+            table, clustering_context.clustering_validator.size_threshold_bytes
+        )
+        should_enforce = clustering_context.clustering_validator.should_enforce_clustering_requirements(
+            table, clustering_context.clustering_validator.size_threshold_bytes
+        )
 
         # Store validation results
         clustering_context.validation_results[table.full_name] = {
@@ -529,3 +533,73 @@ def verify_cluster_exclusion_exemption(clustering_context: ClusteringContext):
     assert (
         len(clustering_context.validation_results) == total_tables
     ), "All tables processed for cluster exclusion analysis"
+
+
+# Small Tables Auto Exemption Scenario Steps
+@when("I check table sizes and clustering exemption eligibility")
+def check_table_sizes_and_exemption_eligibility(clustering_context: ClusteringContext):
+    """Check clustering exemption eligibility using validator methods.
+
+    This step validates the size-based exemption logic for small tables under 1GB.
+    """
+    assert clustering_context.clustering_validator is not None, "Clustering validator should be initialized"
+
+    total_tables = len(clustering_context.discovered_tables)
+    logger.info(f"Checking clustering exemption eligibility for {total_tables} tables")
+
+    for table in clustering_context.discovered_tables:
+        table_size = clustering_context.clustering_validator.get_table_size_bytes(table)
+        # Use validator methods to check exemption status with production threshold
+        threshold = clustering_context.clustering_validator.size_threshold_bytes
+        is_small = clustering_context.clustering_validator.is_small_table(table, threshold, table_size)
+        is_exempt = clustering_context.clustering_validator.is_exempt_from_clustering_requirements(
+            table, threshold, table_size
+        )
+        has_manual_exclusion = clustering_context.clustering_validator.has_cluster_exclusion(table)
+
+        # Store validation results
+        clustering_context.validation_results[table.full_name] = {
+            "is_small_table": is_small,
+            "is_exempt_from_clustering": is_exempt,
+            "has_manual_exclusion": has_manual_exclusion,
+            "table_info": table,
+        }
+
+
+@then("tables under 1GB should be automatically exempt from clustering requirements")
+def verify_small_tables_automatically_exempt(clustering_context: ClusteringContext):
+    """Verify that small tables are automatically exempt from clustering requirements.
+
+    This validates the core business logic for size-based clustering exemption.
+    """
+    total_tables = len(clustering_context.discovered_tables)
+    small_tables_count = 0
+    exempt_small_tables = 0
+
+    for result in clustering_context.validation_results.values():
+        is_small = result.get("is_small_table", False)
+        is_exempt = result.get("is_exempt_from_clustering", False)
+        table = result.get("table_info")
+
+        if is_small:
+            small_tables_count += 1
+            if is_exempt:
+                exempt_small_tables += 1
+            else:
+                table_name = table.full_name if table else "unknown"
+                raise AssertionError(f"Small table {table_name} should be automatically exempt")
+
+    logger.info("Size-based clustering exemption validation complete:")
+    logger.info(f"  Total tables analyzed: {total_tables}")
+    logger.info(f"  Small tables found: {small_tables_count}")
+    logger.info(f"  Small tables properly exempt: {exempt_small_tables}")
+
+    # Success criteria: Size-based exemption working correctly
+    if small_tables_count > 0:
+        assert exempt_small_tables == small_tables_count, f"All {small_tables_count} small tables should be exempt"
+        logger.info(
+            f"✅ Size-based exemption working correctly: {small_tables_count}/{small_tables_count} small tables exempt"
+        )
+    else:
+        logger.info("ℹ️  No small tables found in production data to validate size-based exemption")
+        # This is acceptable - production environments may not have small tables

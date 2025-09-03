@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import TYPE_CHECKING, Any
+
+from databricks.sdk import WorkspaceClient
 
 from tests.utils.clustering_config_loader import get_clustering_config_loader
 
 if TYPE_CHECKING:
     from tests.utils.discovery import TableInfo
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class ClusteringValidator:
@@ -348,7 +355,7 @@ class ClusteringValidator:
             return "excluded"
         return "not_excluded"
 
-    def get_table_size_bytes(self, table: TableInfo, warehouse_id: str | None = None) -> int | None:
+    def get_table_size_bytes(self, table: TableInfo) -> int | None:
         """Get table size in bytes using DESCRIBE DETAIL SQL command.
 
         Based on feasibility research:
@@ -367,53 +374,47 @@ class ClusteringValidator:
         # Note: This method signature allows for unit testing with mock data
         # while providing the interface needed for integration testing
 
-        if not warehouse_id:
-            # In unit tests, we can mock this by providing size data via other means
-            # In integration/production, warehouse_id must be provided
+        w = WorkspaceClient()
+
+        warehouse_id = os.getenv("DATABRICKS_WAREHOUSE_ID")
+        if warehouse_id is None:
             return None
 
-        try:
-            from databricks.sdk import WorkspaceClient
+        result = w.statement_execution.execute_statement(
+            statement=f"DESCRIBE DETAIL {table.full_name}",
+            warehouse_id=warehouse_id,
+            wait_timeout="30s",
+        )
 
-            w = WorkspaceClient()
+        if (
+            result.result
+            and result.result.data_array
+            and result.manifest
+            and result.manifest.schema
+            and result.manifest.schema.columns
+        ):
+            # Get column names
+            columns = [col.name for col in result.manifest.schema.columns]
+            # Get first row of data
+            row_data = result.result.data_array[0]
 
-            result = w.statement_execution.execute_statement(
-                statement=f"DESCRIBE DETAIL {table.full_name}", warehouse_id=warehouse_id, wait_timeout="30s"
-            )
+            # Create dict for easier access
+            detail_dict = dict(zip(columns, row_data))
 
-            if (
-                result.result
-                and result.result.data_array
-                and result.manifest
-                and result.manifest.schema
-                and result.manifest.schema.columns
-            ):
-                # Get column names
-                columns = [col.name for col in result.manifest.schema.columns]
-                # Get first row of data
-                row_data = result.result.data_array[0]
-
-                # Create dict for easier access
-                detail_dict = dict(zip(columns, row_data))
-
-                # Extract sizeInBytes
-                size_in_bytes = detail_dict.get("sizeInBytes")
-                if isinstance(size_in_bytes, int | str):
-                    return int(size_in_bytes)
-
-        except Exception:
-            # If SQL execution fails, return None to indicate size unavailable
-            pass
+            # Extract sizeInBytes
+            size_in_bytes = detail_dict.get("sizeInBytes")
+            if isinstance(size_in_bytes, int | str):
+                return int(size_in_bytes)
 
         return None
 
-    def is_small_table(self, table: TableInfo, warehouse_id: str | None = None, size_bytes: int | None = None) -> bool:
+    def is_small_table(self, table: TableInfo, threshold_bytes: int, size_bytes: int | None = None) -> bool:
         """Check if table is under the size threshold for automatic exemption.
 
         Args:
             table: TableInfo object containing table metadata
-            warehouse_id: Optional warehouse ID for SQL execution
-            size_bytes: Optional pre-calculated table size in bytes (for testing)
+            threshold_bytes: Size threshold in bytes to determine if table is small
+            size_bytes: Optional pre-calculated table size in bytes
 
         Returns:
             bool: True if table is under size threshold, False otherwise
@@ -421,22 +422,14 @@ class ClusteringValidator:
         if not self.exempt_small_tables:
             return False
 
-        # Allow size to be provided (for unit testing)
-        table_size = size_bytes if size_bytes is not None else self.get_table_size_bytes(table, warehouse_id)
-
-        if table_size is None:
+        if size_bytes is None:
             # If we can't determine size, don't exempt based on size
             return False
 
-        # Use test threshold for integration testing, production threshold otherwise
-        # Determine if this is a test table by checking if it's in pytest_test_data schema
-        is_test_table = table.schema == "pytest_test_data"
-        threshold = self.test_size_threshold_bytes if is_test_table else self.size_threshold_bytes
-
-        return table_size < threshold
+        return size_bytes < threshold_bytes
 
     def is_exempt_from_clustering_requirements(
-        self, table: TableInfo, warehouse_id: str | None = None, size_bytes: int | None = None
+        self, table: TableInfo, threshold_bytes: int, size_bytes: int | None = None
     ) -> bool:
         """Check if table is exempt from clustering requirements.
 
@@ -446,8 +439,8 @@ class ClusteringValidator:
 
         Args:
             table: TableInfo object containing table metadata
-            warehouse_id: Optional warehouse ID for SQL execution (needed for size detection)
-            size_bytes: Optional pre-calculated table size in bytes (for testing)
+            threshold_bytes: Size threshold in bytes for exemption
+            size_bytes: Optional pre-calculated table size in bytes
 
         Returns:
             bool: True if table is exempt from clustering requirements, False otherwise
@@ -457,10 +450,10 @@ class ClusteringValidator:
             return True
 
         # Check size-based exemption
-        return self.is_small_table(table, warehouse_id, size_bytes)
+        return self.is_small_table(table, threshold_bytes, size_bytes)
 
     def should_enforce_clustering_requirements(
-        self, table: TableInfo, warehouse_id: str | None = None, size_bytes: int | None = None
+        self, table: TableInfo, threshold_bytes: int, size_bytes: int | None = None
     ) -> bool:
         """Check if clustering requirements should be enforced for this table.
 
@@ -469,10 +462,10 @@ class ClusteringValidator:
 
         Args:
             table: TableInfo object containing table metadata
-            warehouse_id: Optional warehouse ID for SQL execution (needed for size detection)
-            size_bytes: Optional pre-calculated table size in bytes (for testing)
+            threshold_bytes: Size threshold in bytes for exemption
+            size_bytes: Optional pre-calculated table size in bytes
 
         Returns:
             bool: True if clustering requirements should be enforced, False if exempt
         """
-        return not self.is_exempt_from_clustering_requirements(table, warehouse_id, size_bytes)
+        return not self.is_exempt_from_clustering_requirements(table, threshold_bytes, size_bytes)

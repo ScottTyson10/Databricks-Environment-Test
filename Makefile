@@ -200,13 +200,22 @@ _test-scenario-layer:
 				cluster-by-auto) marker="auto_clustering"; step_file="tests/step_definitions/clustering_steps.py" ;; \
 				delta-auto-optimization) marker="delta_auto_optimization"; step_file="tests/step_definitions/clustering_steps.py" ;; \
 				cluster-exclusion) marker="cluster_exclusion"; step_file="tests/step_definitions/clustering_steps.py" ;; \
+				small-tables-auto-exemption) marker="small_tables_auto_exemption"; step_file="tests/step_definitions/clustering_steps.py" ;; \
 				*) marker="$(SCENARIO)"; step_file="tests/step_definitions/documentation_steps.py" ;; \
 			esac; \
-			case "$(MODE)" in \
-				debug) pytest "$$step_file" -m "$$marker" $(PYTEST_DEBUG_OPTS) ;; \
-				failfast) pytest "$$step_file" -m "$$marker" $(PYTEST_FAILFAST_OPTS) ;; \
-				*) pytest "$$step_file" -m "$$marker" $(PYTEST_OPTS) ;; \
-			esac ;; \
+			if [ -n "$$marker" ]; then \
+				case "$(MODE)" in \
+					debug) pytest "$$step_file" -m "$$marker" $(PYTEST_DEBUG_OPTS) ;; \
+					failfast) pytest "$$step_file" -m "$$marker" $(PYTEST_FAILFAST_OPTS) ;; \
+					*) pytest "$$step_file" -m "$$marker" $(PYTEST_OPTS) ;; \
+				esac; \
+			else \
+				case "$(MODE)" in \
+					debug) pytest "$$step_file" $(PYTEST_DEBUG_OPTS) ;; \
+					failfast) pytest "$$step_file" $(PYTEST_FAILFAST_OPTS) ;; \
+					*) pytest "$$step_file" $(PYTEST_OPTS) ;; \
+				esac; \
+			fi ;; \
 		*) echo "$(RED)❌ Unknown layer '$(LAYER)'$(NC)"; exit 1 ;; \
 	esac
 

@@ -6,7 +6,7 @@ Each table represents a specific test case for size threshold detection and exem
 
 from __future__ import annotations
 
-from tests.fixtures.table_factory import TestTableSpecWithProperties, TestTableSpecWithClustering
+from tests.fixtures.table_factory import TestTableSpecWithClustering, TestTableSpecWithProperties
 
 # Test table specifications for size-based exemption scenario
 # Each spec represents a specific size exemption validation test case
@@ -23,22 +23,20 @@ TABLE_SPECS_SIZE_EXEMPTION: dict[str, TestTableSpecWithProperties | TestTableSpe
         properties={},  # No manual exclusion flag - relying on size-based exemption
         # Note: Will be kept small (under 1MB) by inserting minimal test data
     ),
-    
     # Small table with manual exclusion - both exemptions should apply
     "small_table_with_manual_exclusion": TestTableSpecWithProperties(
         name="size_exemption_test_small_excluded",
         comment="Small table that is also manually excluded - double exemption test",
         expected_pass=True,  # Should pass due to both size and manual exemption
         columns=[
-            ("id", "BIGINT", "Primary key column"), 
+            ("id", "BIGINT", "Primary key column"),
             ("value", "DOUBLE", "Numeric value"),
         ],
         properties={"cluster_exclusion": "true"},  # Manual exclusion AND size exemption
     ),
-    
     # Small table with clustering - clustering should take precedence over size exemption
     "small_table_with_clustering": TestTableSpecWithClustering(
-        name="size_exemption_test_small_clustered", 
+        name="size_exemption_test_small_clustered",
         comment="Small table with clustering columns - clustering should override size exemption",
         expected_pass=True,  # Should pass because clustering is present (not subject to exemption)
         columns=[
@@ -48,7 +46,6 @@ TABLE_SPECS_SIZE_EXEMPTION: dict[str, TestTableSpecWithProperties | TestTableSpe
         ],
         clustering_columns=["category"],  # Will be clustered, so size exemption doesn't apply
     ),
-    
     # Large table (will be made over test threshold) - should NOT be exempt
     "large_table_no_exemption": TestTableSpecWithProperties(
         name="size_exemption_test_large_table",
@@ -64,10 +61,9 @@ TABLE_SPECS_SIZE_EXEMPTION: dict[str, TestTableSpecWithProperties | TestTableSpe
         properties={},  # No exclusion flags
         # Note: Will have larger data inserted to exceed 1MB test threshold
     ),
-    
     # Large table with manual exclusion - manual exclusion should override size
     "large_table_with_manual_exclusion": TestTableSpecWithProperties(
-        name="size_exemption_test_large_excluded", 
+        name="size_exemption_test_large_excluded",
         comment="Large table with manual exclusion - manual flag should override size check",
         expected_pass=True,  # Should pass due to manual exclusion despite large size
         columns=[
@@ -77,7 +73,6 @@ TABLE_SPECS_SIZE_EXEMPTION: dict[str, TestTableSpecWithProperties | TestTableSpe
         ],
         properties={"cluster_exclusion": "true"},  # Manual exclusion overrides size
     ),
-    
     # Edge case: Empty table - should be considered small
     "empty_table": TestTableSpecWithProperties(
         name="size_exemption_test_empty_table",
@@ -85,16 +80,15 @@ TABLE_SPECS_SIZE_EXEMPTION: dict[str, TestTableSpecWithProperties | TestTableSpe
         expected_pass=True,  # Should be exempt as empty table is under threshold
         columns=[
             ("id", "BIGINT", "Primary key column"),
-            ("data", "STRING", "Data column"),  
+            ("data", "STRING", "Data column"),
         ],
         properties={},
         # Note: No data will be inserted, testing zero-size case
     ),
-    
     # Production threshold test table - sized close to 1GB boundary
     "threshold_boundary_table": TestTableSpecWithProperties(
         name="size_exemption_test_boundary",
-        comment="Table for testing size boundary conditions near thresholds", 
+        comment="Table for testing size boundary conditions near thresholds",
         expected_pass=True,  # Will be kept under test threshold (1MB)
         columns=[
             ("id", "BIGINT", "Primary key column"),
