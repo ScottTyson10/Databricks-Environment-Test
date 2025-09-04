@@ -106,6 +106,23 @@ test-integration:
 	@echo "$(RED)⚠️  This creates test tables in Databricks$(NC)"
 	CREATE_TEST_TABLES=true pytest tests/integration/ $(PYTEST_OPTS)
 
+# Layer 3: Production tests (BDD)
+test-production:
+	@echo "$(YELLOW)🚀 Running production BDD tests...$(NC)"
+	@echo "$(YELLOW)⚠️  This runs against real production data$(NC)"
+	pytest tests/step_definitions/documentation_steps.py tests/step_definitions/clustering_steps.py $(PYTEST_OPTS)
+
+# Run all tests (all three layers)
+test-all:
+	@echo "$(YELLOW)🎯 Running all tests (Unit + Integration + Production)...$(NC)"
+	@$(MAKE) test-unit
+	@echo ""
+	@$(MAKE) test-integration
+	@echo ""
+	@$(MAKE) test-production
+	@echo ""
+	@echo "$(GREEN)✅ All tests complete!$(NC)"
+
 # Code quality checks
 quality:
 	@echo "$(YELLOW)🔍 Running code quality checks...$(NC)"
@@ -267,6 +284,8 @@ help:
 	@echo "$(YELLOW)🔧 Development:$(NC)"
 	@echo "  make test-unit                - Unit tests only"
 	@echo "  make test-integration         - Integration tests only"
+	@echo "  make test-production          - Production BDD tests only"
+	@echo "  make test-all                 - Run all tests (unit + integration + production)"
 	@echo "  make quality                  - Code formatting & linting"
 	@echo "  make show-env                 - Show environment status"
 	@echo "  make clean                    - Clean test results"
